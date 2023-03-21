@@ -128,7 +128,6 @@ dmypy.json
 # Pyre type checker
 .pyre/
 
-logo/
 .ipynb_checkpoints/
 runs/
 datasets/

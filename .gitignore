@@ -139,7 +139,6 @@ src/
 logs/
 __pycache__/
 *.jpg
-*.png
 *.Identifier
 *.xlsx
 *.csv

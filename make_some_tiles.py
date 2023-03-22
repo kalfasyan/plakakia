@@ -23,15 +23,15 @@ random.seed(3)
                'tiles/', 'output/', 'annotations/', 'images/', 'logs/']]
 
 settings=Settings(
-    input_extension_images='jpg',
+    input_extension_images='png',
     # pad_image=False,
-    tile_size=165,
-    step_size=100,
+    tile_size=250,
+    step_size=200,
     # check_partial=False,
     # partial_overlap_threshold=0.8,
-    input_dir_images='/home/kalfasyan/data/traffic_signs/traffic_signs_yolo/images',
-    input_dir_annotations='/home/kalfasyan/data/traffic_signs/traffic_signs_yolo/annotations',
-    input_format_annotations='yolo',
+    input_dir_images='/home/kalfasyan/data/DATA_TUT/images',
+    input_dir_annotations='/home/kalfasyan/data/DATA_TUT/annotations',
+    input_format_annotations='pascal_voc',
     output_dir_images='output/images',
     output_dir_annotations='output/annotations',
     output_format_annotations='pascal_voc',
@@ -51,8 +51,9 @@ settings=Settings(
 # Set the logger
 logger=settings.logger
 
-for t, (input_image, input_annotation) in tqdm(enumerate(zip(settings.input_images, settings.input_annotations)),
-                                               desc='Processing images',
+for t, (input_image, input_annotation) in tqdm(enumerate(zip(settings.input_images,
+                                                             settings.input_annotations)),
+                                               desc='Exporting tiles and annotations..',
                                                total=len(settings.input_images)):
     start_time=perf_counter()
 

@@ -2,7 +2,7 @@ import logging
 from dataclasses import dataclass, field
 from logging.handlers import RotatingFileHandler
 from pathlib import Path
-
+from tqdm import tqdm
 import imagesize
 
 # Create a dataclass for storing the settings
@@ -81,7 +81,9 @@ class Settings():
 
         # Calculate the minimum image dimension
         minimum_image_dim = float('inf')
-        for img in self.input_images:
+        for img in tqdm(self.input_images,
+                        desc='Validating settings..',
+                        total=len(self.input_images)):
             width, height = imagesize.get(img)
             minimum_image_dim = min(minimum_image_dim, width, height)
             # Check if there is an annotation for each image

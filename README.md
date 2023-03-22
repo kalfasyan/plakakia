@@ -3,11 +3,11 @@
 
 **DISCLAIMER**: This is a work in progress.  
   
+![Alt text](logo/logo.png?raw=true "This is a \"plakaki\", meaning tile in Greek.")  
+
 The reason for making this tool is to handle image tiling that takes into account bounding boxes that appear around the image. For now, I've only considered rectangular tiles. An image is divided into tiles based on a given `tile_size` and `step_size`. Overlapping tiles can be handled fine. Bounding boxes are assigned to a tile only if they are *fully* inside it, but I'm planning to support partial overlap as well. In any case, you should bear in mind that such methods create duplicate bounding boxes (i.e. a bounding box can appear in more than one tiles). I'm planning to provide some options on how to handle that, e.g. avoid duplicates at the potential cost of missing some bounding boxes depending on the choice of `tile_size` and `step_size`.  
   
 Tried to use `numpy` extensively and make this as fast as possible so that one can use it with thousands of images. This is a work in progress. Planning to check out `numba` and `cupy` to see if even larger speedups are possible.
-
-![Alt text](logo/logo.png?raw=true "This is a \"plakaki\", meaning tile in Greek.")
 
 # Requirements
 There is a `requirements.txt` file which you can use to create a virtual environment. It is **highly** recommended that you do that before using this repository.  

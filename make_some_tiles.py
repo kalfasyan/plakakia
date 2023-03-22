@@ -20,10 +20,10 @@ random.seed(3)
 
 settings = Settings(
     input_extension_images='png',
-    # pad_image=False, 
-    tile_size=250, 
-    step_size=100, 
-    # check_partial=False, 
+    # pad_image=False,
+    tile_size=250,
+    step_size=100,
+    # check_partial=False,
     # partial_overlap_threshold=0.8,
     input_dir_images='input/images',
     input_dir_annotations='input/annotations',
@@ -42,17 +42,21 @@ logger = settings.logger
 # Get the list of input images and annotations
 input_images, input_annotations = get_input_lists(settings)
 
-for t, (input_image, input_annotation) in tqdm(enumerate(zip(input_images, input_annotations)), 
-                                               desc='Processing images', 
+for t, (input_image, input_annotation) in tqdm(enumerate(zip(input_images, input_annotations)),
+                                               desc='Processing images',
                                                total=len(input_images)):
     start_time = perf_counter()
 
+    # Get the file name
     file_name = Path(input_image).stem
     logger.info("Processing file: %s", file_name)
 
+    # Read the image
     IMAGE_FILENAME = str(Path(settings.input_dir_images)\
                          .joinpath(f"{file_name}.{settings.input_extension_images}"))
     image = cv2.imread(IMAGE_FILENAME)
+
+    # Pad the image if needed
     image = add_border(image,
                         top=settings.pad_size,
                         bottom=settings.pad_size,
@@ -64,14 +68,14 @@ for t, (input_image, input_annotation) in tqdm(enumerate(zip(input_images, input
 
     # export_yolo_annotation_from_csv(filename=file_name, output_dir=settings.input_dir_annotations)
 
-    ''' Read the coordinates of the bounding boxes from the annotation files '''
-    all_bboxes_coords, box_classes = read_coordinates_from_annotations(path=input_annotation, 
-                                                                       image_shape=image_shape, 
+    # Read the coordinates of the bounding boxes from the annotation files
+    all_bboxes_coords, box_classes = read_coordinates_from_annotations(path=input_annotation,
+                                                                       image_shape=image_shape,
                                                                        settings=settings)
 
-    ''' Split the image into tiles and get the coordinates of the tiles '''
-    tiles,coordinates = tile_image(image.copy(), 
-                                tile_size=settings.tile_size, 
+    # Split the image into tiles and get the coordinates of the tiles
+    tiles,coordinates = tile_image(image.copy(),
+                                tile_size=settings.tile_size,
                                 step_size=settings.step_size)
 
     logger.info("%d tiles created in total", len(tiles))
@@ -81,33 +85,34 @@ for t, (input_image, input_annotation) in tqdm(enumerate(zip(input_images, input
     logger.info("%d bounding boxes in total", len(bounding_boxes))
 
     # Get the bounding boxes inside the tiles
-    boxes_in_tiles = get_boxes_inside_tiles(bounding_boxes=bounding_boxes, 
-                                            tile_coordinates=coordinates, 
-                                            partial_boxes=settings.check_partial, 
+    boxes_in_tiles = get_boxes_inside_tiles(bounding_boxes=bounding_boxes,
+                                            tile_coordinates=coordinates,
+                                            partial_boxes=settings.check_partial,
                                             overlap_threshold=settings.partial_overlap_threshold)
 
-    logger.info("%d tiles that are populated with bounding boxes", 
+    logger.info("%d tiles that are populated with bounding boxes",
                 len([i for i in boxes_in_tiles if len(i)]))
 
     # Generate the tiles with the bounding boxes
     df_results = save_boxes(filename=file_name,
-                            tiles=tiles,                         
-                            coordinates=coordinates, 
-                            boxes_in_tiles=boxes_in_tiles, 
-                            box_classes=box_classes, 
+                            tiles=tiles,
+                            coordinates=coordinates,
+                            boxes_in_tiles=boxes_in_tiles,
+                            box_classes=box_classes,
                             draw_boxes=settings.draw_boxes,
                             output_dir=settings.output_dir_images)
 
     # Save the annotations in Pascal VOC format or YOLO format
-    save_annotations(df_results, 
-                     filename=file_name, 
-                     settings=settings, 
+    save_annotations(df_results,
+                     filename=file_name,
+                     settings=settings,
                      disable_progress_bar=True)
 
     # Check if all the bboxes are saved
-    perform_quality_checks(df_results, 
-                           bounding_boxes, 
+    perform_quality_checks(df_results,
+                           bounding_boxes,
                            settings=settings)
 
+    # Measure the elapsed time
     end_time = perf_counter()
     logger.info("Elapsed time: %.2f seconds", end_time-start_time)

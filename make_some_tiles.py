@@ -1,23 +1,25 @@
 #!/usr/bin/env python
 # coding: utf-8
 
-# TODO: fix classes
-import numpy as np
-import cv2
-from pathlib import Path
-import shutil
-from tqdm import tqdm
-from time import perf_counter
-from utils_tiling import *
-from settings import Settings
 import random
+import shutil
+from pathlib import Path
+from time import perf_counter
+
+import cv2
+import numpy as np
+from tqdm import tqdm
+
+from settings import Settings
+from utils_tiling import *
+
 random.seed(3)
 
 # # Delete the tiles and annotations folders if they exist
-# [shutil.rmtree(x) if Path(x).exists() else None for x in ['tiles/', 'output/', 'annotations/', 'images/', 'logs/']]
+[shutil.rmtree(x) if Path(x).exists() else None for x in ['tiles/', 'output/', 'annotations/', 'images/', 'logs/']]
 
 settings = Settings(
-    input_extension_images='jpg',
+    input_extension_images='png',
     # pad_image=False, 
     tile_size=250, 
     step_size=100, 
@@ -25,10 +27,10 @@ settings = Settings(
     # partial_overlap_threshold=0.8,
     input_dir_images='input/images',
     input_dir_annotations='input/annotations',
-    input_format_annotations='yolo',
+    input_format_annotations='pascal_voc',
     output_dir_images='output/images',
     output_dir_annotations='output/annotations',
-    output_format_annotations='yolo',
+    output_format_annotations='pascal_voc',
     draw_boxes=True,
     log=True,
     log_folder='logs',
@@ -46,17 +48,16 @@ for t, (input_image, input_annotation) in tqdm(enumerate(zip(input_images, input
     start_time = perf_counter()
 
     file_name = Path(input_image).stem
-    logger.info(f"Processing file: {file_name}") \
-        if settings.log else None
+    logger.info("Processing file: %s", file_name)
 
-    image_filename = str(Path(settings.input_dir_images)\
+    IMAGE_FILENAME = str(Path(settings.input_dir_images)\
                          .joinpath(f"{file_name}.{settings.input_extension_images}"))
-    image = cv2.imread(image_filename)
-    image = add_border(image, 
-                        top=settings.pad_size, 
-                        bottom=settings.pad_size, 
-                        left=settings.pad_size, 
-                        right=settings.pad_size, 
+    image = cv2.imread(IMAGE_FILENAME)
+    image = add_border(image,
+                        top=settings.pad_size,
+                        bottom=settings.pad_size,
+                        left=settings.pad_size,
+                        right=settings.pad_size,
                         color=[0,0,0], # BGR format
                         ) if settings.pad_image else image
     image_shape = image.shape
@@ -73,24 +74,22 @@ for t, (input_image, input_annotation) in tqdm(enumerate(zip(input_images, input
                                 tile_size=settings.tile_size, 
                                 step_size=settings.step_size)
 
-    logger.info(f"{len(tiles)} tiles created in total") if settings.log else None
-    logger.info(f"{tiles.nbytes / (1024*1024*1024):.2f}GB of memory used for the tiles") \
-        if settings.log else None
+    logger.info("%d tiles created in total", len(tiles))
+    logger.info("%.2fGB of memory used for the tiles", tiles.nbytes / (1024*1024*1024))
 
     bounding_boxes = np.array([np.array(i) for i in all_bboxes_coords])
-    logger.info(f"{len(bounding_boxes)} bounding boxes in total") \
-        if settings.log else None
+    logger.info("%d bounding boxes in total", len(bounding_boxes))
 
-    ''' Get the bounding boxes inside the tiles '''
+    # Get the bounding boxes inside the tiles
     boxes_in_tiles = get_boxes_inside_tiles(bounding_boxes=bounding_boxes, 
                                             tile_coordinates=coordinates, 
                                             partial_boxes=settings.check_partial, 
                                             overlap_threshold=settings.partial_overlap_threshold)
 
-    logger.info(f"{len([i for i in boxes_in_tiles if len(i)])} tiles that are populated with bounding boxes") \
-        if settings.log else None
+    logger.info("%d tiles that are populated with bounding boxes", 
+                len([i for i in boxes_in_tiles if len(i)]))
 
-    ''' Generate the tiles with the bounding boxes '''
+    # Generate the tiles with the bounding boxes
     df_results = save_boxes(filename=file_name,
                             tiles=tiles,                         
                             coordinates=coordinates, 
@@ -99,17 +98,16 @@ for t, (input_image, input_annotation) in tqdm(enumerate(zip(input_images, input
                             draw_boxes=settings.draw_boxes,
                             output_dir=settings.output_dir_images)
 
-    ''' Save the annotations in Pascal VOC format or YOLO format '''
+    # Save the annotations in Pascal VOC format or YOLO format
     save_annotations(df_results, 
                      filename=file_name, 
                      settings=settings, 
                      disable_progress_bar=True)
 
-    ''' Check if all the bboxes are saved '''
+    # Check if all the bboxes are saved
     perform_quality_checks(df_results, 
                            bounding_boxes, 
                            settings=settings)
 
     end_time = perf_counter()
-    logger.info(f"Elapsed time: {end_time-start_time:.2f} seconds") \
-        if settings.log else None
+    logger.info("Elapsed time: %.2f seconds", end_time-start_time)

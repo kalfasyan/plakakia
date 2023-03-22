@@ -26,7 +26,7 @@ def add_border(image, top=None, bottom=None, left=None, right=None, color=[0, 0,
 # TODO: fix this
 def read_pascalvoc_coordinates_from_xml(filename=str):
     ''' Read coordinates from PascalVOC xml file. '''
-    tree = ET.parse(filename)
+    tree = ET.parse(filename) # type: ignore
     root = tree.getroot()
 
     boxes, classes = [], []
@@ -40,10 +40,10 @@ def read_pascalvoc_coordinates_from_xml(filename=str):
 
         # Get bounding box coordinates
         xmlbox = obj.find('bndbox')
-        x_1 = int(xmlbox.find('xmin').text)
-        y_1 = int(xmlbox.find('ymin').text)
-        x_2 = int(xmlbox.find('xmax').text)
-        y_2 = int(xmlbox.find('ymax').text)
+        x_1 = int(xmlbox.find('xmin').text) # type: ignore
+        y_1 = int(xmlbox.find('ymin').text) # type: ignore
+        x_2 = int(xmlbox.find('xmax').text) # type: ignore
+        y_2 = int(xmlbox.find('ymax').text) # type: ignore
 
         # Append to boxes and classes lists
         boxes.append([x_1, y_1, x_2, y_2])
@@ -71,9 +71,9 @@ def get_input_lists(settings):
 
     return input_images, input_annotations
 
-def read_yolo_coordinates_from_txt(path=None, image_shape=None):
+def read_yolo_coordinates_from_txt(path=None, image_shape=()):
     """ Read coordinates from YOLO txt file. """
-    with open(path, mode='r', encoding="utf-8") as file:
+    with open(path, mode='r', encoding="utf-8") as file: # type: ignore
         lines = file.readlines()
 
     image_height, image_width, _ = image_shape
@@ -116,10 +116,10 @@ def read_coordinates_from_annotations(path=None, image_shape=None, settings=None
 def export_yolo_annotation_from_csv(filename=None, output_dir=None):
     """ Export YOLO annotation from csv file. """
     csv_filename = f"df_{filename}.csv"
-    df = pd.read_csv(f"{csv_filename}")
-    df = df[df.user_verification].copy().reset_index()
-    df['prediction_verified'] = np.random.randint(10,size=len(df)).tolist()
-    df[['prediction_verified','yolo_x','yolo_y','yolo_width','yolo_height']]\
+    dataframe = pd.read_csv(f"{csv_filename}")
+    dataframe = dataframe[dataframe.user_verification].copy().reset_index()
+    dataframe['prediction_verified'] = np.random.randint(10,size=len(dataframe)).tolist()
+    dataframe[['prediction_verified','yolo_x','yolo_y','yolo_width','yolo_height']]\
         .to_csv(f"{output_dir}/{filename}.txt", index=False, header=False, sep=' ')
 
 def tile_image(image, tile_size, step_size):
@@ -161,8 +161,8 @@ def get_boxes_inside_tiles(bounding_boxes,
     for i, tile_coord in enumerate(tile_coordinates):
         if partial_boxes:
             # Create a boolean mask indicating which boxes partially overlap with the tile
-            mask = is_partial_square_inside_array(bounding_boxes, 
-                                                  tile_coord, 
+            mask = is_partial_square_inside_array(bounding_boxes,
+                                                  tile_coord,
                                                   overlap_threshold=overlap_threshold)
         else:
             # Create a boolean mask indicating which boxes are completely inside the tile
@@ -202,11 +202,11 @@ def is_square_inside_array(bounding_boxes, tile_coord):
         bounding_boxes[:, 3] <= tile_coord[3]
     ))
 
-def save_boxes(tiles=None,
+def save_boxes(tiles=np.array([]),
                filename=None,
-               coordinates=None,
-               boxes_in_tiles=None,
-               box_classes=None,
+               coordinates=np.array([]),
+               boxes_in_tiles=[],
+               box_classes=[],
                draw_boxes=True,
                output_dir=None,
                disable_progress_bar=True):
@@ -260,26 +260,26 @@ def save_boxes(tiles=None,
 
     return results_df
 
-def save_yolo_annotations_from_df(df, 
-                                  filename=None, 
-                                  output_dir='tiles/', 
+def save_yolo_annotations_from_df(dataframe,
+                                  filename=None,
+                                  output_dir='tiles/',
                                   disable_progress_bar=True):
     """
     Save YOLO annotations from a dataframe containing the tile coordinates and the bounding boxes.
     """
     # Compute the coordinates of the center of the box and the width and height of the box
-    x_1, y_1, x_2, y_2 = df.box_x1, df.box_y1, df.box_x2, df.box_y2
-    image_width = df['tile_x2'] - df['tile_x1']
-    image_height = df['tile_y2'] - df['tile_y1']
-    df['yolo_x'] = (x_1 + x_2) / 2 / image_width
-    df['yolo_y'] = (y_1 + y_2) / 2 / image_height
-    df['yolo_w'] = (x_2 - x_1) / image_width
-    df['yolo_h'] = (y_2 - y_1) / image_height
+    x_1, y_1, x_2, y_2 = dataframe.box_x1, dataframe.box_y1, dataframe.box_x2, dataframe.box_y2
+    image_width = dataframe['tile_x2'] - dataframe['tile_x1']
+    image_height = dataframe['tile_y2'] - dataframe['tile_y1']
+    dataframe['yolo_x'] = (x_1 + x_2) / 2 / image_width
+    dataframe['yolo_y'] = (y_1 + y_2) / 2 / image_height
+    dataframe['yolo_w'] = (x_2 - x_1) / image_width
+    dataframe['yolo_h'] = (y_2 - y_1) / image_height
 
-    group = df.groupby(['tile_x1', 'tile_y1', 'tile_x2', 'tile_y2'])
+    group = dataframe.groupby(['tile_x1', 'tile_y1', 'tile_x2', 'tile_y2'])
 
-    for i, sub in tqdm(group, 
-                       desc='Saving YOLO annotations', 
+    for i, sub in tqdm(group,
+                       desc='Saving YOLO annotations',
                        disable=disable_progress_bar,
                        total=len(group.count())):
         with open(f"{output_dir}/tile_{filename}_{i[0]}_{i[1]}_{i[2]}_{i[3]}.txt",
@@ -289,18 +289,21 @@ def save_yolo_annotations_from_df(df,
                 file.write(f"{int(row['box_class'])} {row['yolo_x']} \
                             {row['yolo_y']} {row['yolo_w']} {row['yolo_h']}\n")
 
-def save_to_pascal_voc_from_df(df, filename=None, output_dir='tiles/', disable_progress_bar=True):
+def save_to_pascal_voc_from_df(dataframe,
+                               filename=None,
+                               output_dir='tiles/',
+                               disable_progress_bar=True):
     """
     Saves a dataframe containing bounding box information in Pascal VOC format.
     """
     # fix this function
 
-    qw = filename
+    f_n = filename
 
     # Group by tile and iterate over groups
-    group = df.groupby(["tile_x1", "tile_y1", "tile_x2", "tile_y2"])
-    for _, tile_df in tqdm(group, 
-                           desc="Saving Pascal VOC annotations", 
+    group = dataframe.groupby(["tile_x1", "tile_y1", "tile_x2", "tile_y2"])
+    for _, tile_df in tqdm(group,
+                           desc="Saving Pascal VOC annotations",
                            disable=disable_progress_bar,
                            total=len(group.count())):
         # Create the XML structure
@@ -309,7 +312,7 @@ def save_to_pascal_voc_from_df(df, filename=None, output_dir='tiles/', disable_p
         tile_x2 = tile_df["tile_x2"].iloc[0]
         tile_y2 = tile_df["tile_y2"].iloc[0]
 
-        tile_name = f"tile_{qw}_{tile_x1}_{tile_y1}_{tile_x2}_{tile_y2}"
+        tile_name = f"tile_{f_n}_{tile_x1}_{tile_y1}_{tile_x2}_{tile_y2}"
         assert 'at' not in str(tile_name), "Something went wrong with the tile name."
 
         annotation = ET.Element("annotation")
@@ -350,24 +353,24 @@ def save_to_pascal_voc_from_df(df, filename=None, output_dir='tiles/', disable_p
                    short_empty_elements=False,
                    method="xml")
 
-def save_annotations(df=None, filename=None, settings=None, disable_progress_bar=True):
+def save_annotations(dataframe=None, filename=None, settings=None, disable_progress_bar=True):
     """ Save the annotations in the format specified in the settings. """
     if settings.output_format_annotations == 'yolo':
-        save_yolo_annotations_from_df(df, 
+        save_yolo_annotations_from_df(dataframe,
                                       filename=filename,
-                                      output_dir=settings.output_dir_annotations, 
+                                      output_dir=settings.output_dir_annotations,
                                       disable_progress_bar=disable_progress_bar)
     elif settings.output_format_annotations == 'pascal_voc':
-        save_to_pascal_voc_from_df(df, 
+        save_to_pascal_voc_from_df(dataframe,
                                    filename=filename,
-                                   output_dir=settings.output_dir_annotations, 
+                                   output_dir=settings.output_dir_annotations,
                                    disable_progress_bar=disable_progress_bar)
     else:
-        raise ValueError("The output format of the annotations is not valid.")        
+        raise ValueError("The output format of the annotations is not valid.")
 
-def perform_quality_checks(df, bounding_boxes, settings):
+def perform_quality_checks(dataframe, bounding_boxes, settings):
     ''' Check if all the bboxes are saved '''
-    saved_bboxes_coords = df[['old_box_x1','old_box_y1','old_box_x2','old_box_y2']].values
+    saved_bboxes_coords = dataframe[['old_box_x1','old_box_y1','old_box_x2','old_box_y2']].values
     unique_rows, row_counts = np.unique(saved_bboxes_coords, axis=0, return_counts=True)
     logger.info(f"{len(saved_bboxes_coords) - len(unique_rows)} \
         bbox(es) saved more than one time.")\
@@ -391,25 +394,31 @@ def plot_example_tile_with_yolo_annotation(settings=None):
 
     # Randomly select a tile from tile_imagepaths list
     img_selection  = random.choice(tile_imagepaths)
-    logger.info(img_selection) if settings.log else None
+    logger.info(img_selection)
     assert Path(img_selection).exists(), "does not exist"
     tile = cv2.imread(str(img_selection))
 
     # Read the corresponding annotation file
     annotation_selection = Path(settings.output_dir_annotations) / f"{img_selection.stem}.txt"
-    logger.info(annotation_selection) if settings.log else None
+    logger.info(annotation_selection)
     assert Path(annotation_selection).exists(), "does not exist"
-    with open(annotation_selection, 'r') as f:
-        lines = f.readlines()
+    with open(annotation_selection, mode='r', encoding="utf-8") as file:
+        lines = file.readlines()
         for line in lines:
             line = line.strip().split()
             yolo_x = float(line[1])
             yolo_y = float(line[2])
             yolo_w = float(line[3])
             yolo_h = float(line[4])
-            x_1, y_1, x_2, y_2 = convert_yolo_to_xyxy(yolo_x, yolo_y, yolo_w, yolo_h, tile.shape[0], tile.shape[1])
+            x_1, y_1, x_2, y_2 = convert_yolo_to_xyxy(yolo_x,
+                                                      yolo_y,
+                                                      yolo_w,
+                                                      yolo_h,
+                                                      tile.shape[0],
+                                                      tile.shape[1])
             cv2.rectangle(tile, (x_1, y_1), (x_2, y_2), (0, 255, 0), 2)
 
     # Plot the tile in RGB
     tile_rgb = cv2.cvtColor(tile, cv2.COLOR_BGR2RGB)
-    plt.imshow(tile_rgb);
+    plt.imshow(tile_rgb)
+    plt.show()

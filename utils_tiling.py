@@ -24,7 +24,7 @@ def add_border(image, top=None, bottom=None, left=None, right=None, color=[0, 0,
     return border
 
 # TODO: fix this
-def read_pascalvoc_coordinates_from_xml(filename=str):
+def read_pascalvoc_coordinates_from_xml(filename=str, settings=None):
     ''' Read coordinates from PascalVOC xml file. '''
     tree = ET.parse(filename) # type: ignore
     root = tree.getroot()
@@ -32,11 +32,7 @@ def read_pascalvoc_coordinates_from_xml(filename=str):
     boxes, classes = [], []
 
     for obj in root.iter('object'):
-        try:
-            class_name = 0#int(obj.find('name').text)
-        except ValueError:
-            class_name = str(obj.find('name').text)
-            # TODO: add class name to class list
+        class_name = settings.annotation_mapping[obj.find('name').text] if isinstance(obj.find('name').text, str) else str(obj.find('name').text)
 
         # Get bounding box coordinates
         xmlbox = obj.find('bndbox')
@@ -51,27 +47,7 @@ def read_pascalvoc_coordinates_from_xml(filename=str):
 
     return boxes, classes
 
-def get_input_lists(settings):
-    '''' Get the list of input images and annotations. '''
-
-    input_images = list(Path(settings.input_dir_images).\
-        glob(f"*.{settings.input_extension_images}"))
-    input_images = [i.as_posix() for i in input_images]
-    input_annotations = list(Path(settings.input_dir_annotations).\
-        glob(f"*.{settings.input_extension_annotations}"))
-    input_annotations = [i.as_posix() for i in input_annotations]
-
-    assert len(input_images), "No images found."
-    assert len(input_annotations), \
-        f"No annotations found with \'input' extension: {settings.input_extension_annotations}."
-    assert len(input_images) == len(input_annotations), \
-        "The number of images is not equal to the number of annotations."
-    input_annotations.sort()
-    input_images.sort()
-
-    return input_images, input_annotations
-
-def read_yolo_coordinates_from_txt(path=None, image_shape=()):
+def read_yolo_coordinates_from_txt(path=None, image_shape=(), settings=None):
     """ Read coordinates from YOLO txt file. """
     with open(path, mode='r', encoding="utf-8") as file: # type: ignore
         lines = file.readlines()
@@ -103,9 +79,9 @@ def read_yolo_coordinates_from_txt(path=None, image_shape=()):
 def read_coordinates_from_annotations(path=None, image_shape=None, settings=None):
     """ Read coordinates from annotations. """
     if settings.input_format_annotations == 'yolo':
-        boxes, classes = read_yolo_coordinates_from_txt(path, image_shape)
+        boxes, classes = read_yolo_coordinates_from_txt(path, image_shape, settings)
     elif settings.input_format_annotations == 'pascal_voc':
-        boxes, classes = read_pascalvoc_coordinates_from_xml(path)
+        boxes, classes = read_pascalvoc_coordinates_from_xml(path, settings)
     else:
         raise ValueError(f"Annotation format {settings.input_format_annotations} not supported")
 
@@ -248,8 +224,7 @@ def save_boxes(tiles=np.array([]),
                                   box[0], box[1], box[2], box[3]]))
 
         # Save the tile with the tile coordinates in the filename
-        cv2.imwrite(f"{output_dir}/\
-            tile_{filename}_{tile_coord[0]}_{tile_coord[1]}_{tile_coord[2]}_{tile_coord[3]}.png",
+        cv2.imwrite(f"{output_dir}/tile_{filename}_{tile_coord[0]}_{tile_coord[1]}_{tile_coord[2]}_{tile_coord[3]}.png",
             tile)
 
     # Create a dataframe with the results
@@ -262,7 +237,7 @@ def save_boxes(tiles=np.array([]),
 
 def save_yolo_annotations_from_df(dataframe,
                                   filename=None,
-                                  output_dir='tiles/',
+                                  settings=None,
                                   disable_progress_bar=True):
     """
     Save YOLO annotations from a dataframe containing the tile coordinates and the bounding boxes.
@@ -282,16 +257,15 @@ def save_yolo_annotations_from_df(dataframe,
                        desc='Saving YOLO annotations',
                        disable=disable_progress_bar,
                        total=len(group.count())):
-        with open(f"{output_dir}/tile_{filename}_{i[0]}_{i[1]}_{i[2]}_{i[3]}.txt",
+        with open(f"{settings.output_dir_annotations}/tile_{filename}_{i[0]}_{i[1]}_{i[2]}_{i[3]}.txt",
                   mode="a+",
                   encoding="utf-8") as file:
             for _, row in sub.iterrows():
-                file.write(f"{int(row['box_class'])} {row['yolo_x']} \
-                            {row['yolo_y']} {row['yolo_w']} {row['yolo_h']}\n")
+                file.write(f"{int(row['box_class'])} {row['yolo_x']} {row['yolo_y']} {row['yolo_w']} {row['yolo_h']}\n")
 
 def save_to_pascal_voc_from_df(dataframe,
                                filename=None,
-                               output_dir='tiles/',
+                               settings=None,
                                disable_progress_bar=True):
     """
     Saves a dataframe containing bounding box information in Pascal VOC format.
@@ -317,7 +291,7 @@ def save_to_pascal_voc_from_df(dataframe,
 
         annotation = ET.Element("annotation")
         folder = ET.SubElement(annotation, "folder")
-        folder.text = output_dir
+        folder.text = settings.output_dir_annotations
         filename = ET.SubElement(annotation, "filename")
         filename.text = f"{tile_name}.png"
         size = ET.SubElement(annotation, "size")
@@ -345,7 +319,7 @@ def save_to_pascal_voc_from_df(dataframe,
 
         # Write the XML to a file
         xml_tile_name = f"{tile_name}.xml"
-        output_path = os.path.join(output_dir, xml_tile_name)
+        output_path = os.path.join(settings.output_dir_annotations, xml_tile_name)
         tree = ET.ElementTree(annotation)
         tree.write(output_path,
                    encoding="utf-8",
@@ -358,12 +332,12 @@ def save_annotations(dataframe=None, filename=None, settings=None, disable_progr
     if settings.output_format_annotations == 'yolo':
         save_yolo_annotations_from_df(dataframe,
                                       filename=filename,
-                                      output_dir=settings.output_dir_annotations,
+                                      settings=settings,
                                       disable_progress_bar=disable_progress_bar)
     elif settings.output_format_annotations == 'pascal_voc':
         save_to_pascal_voc_from_df(dataframe,
                                    filename=filename,
-                                   output_dir=settings.output_dir_annotations,
+                                   settings=settings,
                                    disable_progress_bar=disable_progress_bar)
     else:
         raise ValueError("The output format of the annotations is not valid.")

@@ -11,9 +11,10 @@ import numpy as np
 from tqdm import tqdm
 
 from settings import Settings
-from utils_tiling import (add_border, get_boxes_inside_tiles, get_input_lists,
-                          perform_quality_checks, read_coordinates_from_annotations,
-                          save_annotations, save_boxes, tile_image)
+from utils_tiling import (add_border, get_boxes_inside_tiles,
+                          perform_quality_checks,
+                          read_coordinates_from_annotations, save_annotations,
+                          save_boxes, tile_image)
 
 random.seed(3)
 
@@ -22,19 +23,27 @@ random.seed(3)
                'tiles/', 'output/', 'annotations/', 'images/', 'logs/']]
 
 settings=Settings(
-    input_extension_images='png',
+    input_extension_images='jpg',
     # pad_image=False,
-    tile_size=250,
+    tile_size=165,
     step_size=100,
     # check_partial=False,
     # partial_overlap_threshold=0.8,
-    input_dir_images='input/images',
-    input_dir_annotations='input/annotations',
-    input_format_annotations='pascal_voc',
+    input_dir_images='/home/kalfasyan/data/traffic_signs/traffic_signs_yolo/images',
+    input_dir_annotations='/home/kalfasyan/data/traffic_signs/traffic_signs_yolo/annotations',
+    input_format_annotations='yolo',
     output_dir_images='output/images',
     output_dir_annotations='output/annotations',
     output_format_annotations='pascal_voc',
-    draw_boxes=True,
+    annotation_mapping={"kernel": 0,
+                        "person": 1,
+                        "bottle": 2,
+                        "empty": 3,
+                        "trafficlight": 4,
+                        "speedlimit": 5,
+                        "crosswalk": 6,
+                        "stop": 7,},
+    draw_boxes=False, # if true, the tiles will be saved with rectangles visible around the bboxes
     log=True,
     log_folder='logs',
 )
@@ -42,12 +51,9 @@ settings=Settings(
 # Set the logger
 logger=settings.logger
 
-# Get the list of input images and annotations
-input_images, input_annotations=get_input_lists(settings)
-
-for t, (input_image, input_annotation) in tqdm(enumerate(zip(input_images, input_annotations)),
+for t, (input_image, input_annotation) in tqdm(enumerate(zip(settings.input_images, settings.input_annotations)),
                                                desc='Processing images',
-                                               total=len(input_images)):
+                                               total=len(settings.input_images)):
     start_time=perf_counter()
 
     # Get the file name
@@ -83,7 +89,7 @@ for t, (input_image, input_annotation) in tqdm(enumerate(zip(input_images, input
 
     logger.info("%d tiles created in total", len(tiles))
     logger.info("%.2fGB of memory used for the tiles",
-                tiles.nbytes / (1024*1024*1024))
+                tiles.nbytes / (1024*1024*1024)) # 1GB = 1024MB = 1024*1024KB = 1024*1024*1024B
 
     bounding_boxes=np.array([np.array(i) for i in all_bboxes_coords])
     logger.info("%d bounding boxes in total", len(bounding_boxes))

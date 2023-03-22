@@ -1,11 +1,14 @@
-from pathlib import Path
-from dataclasses import dataclass
 import logging
+from dataclasses import dataclass, field
 from logging.handlers import RotatingFileHandler
+from pathlib import Path
+
+import imagesize
 
 # Create a dataclass for storing the settings
 @dataclass
 class Settings():
+    """ Settings for the tiling process. """
     # Define the image file extensions
     input_extension_images: str = 'jpg'
     # Set the annotation file extensions
@@ -34,6 +37,8 @@ class Settings():
     output_dir_annotations: str = 'output_annotations'
     # Define the annotation file format
     output_format_annotations: str = 'yolo' # 'yolo' or 'pascal_voc'
+    # Define a mapping for the annotation labels
+    annotation_mapping: dict = field(default_factory=dict)
     # Whether to draw rectangels in the tile images
     draw_boxes: bool = False
     # Set a flag for logging output
@@ -43,22 +48,59 @@ class Settings():
 
     # Define the initialization method of this dataclass
     def __post_init__(self):
-        # Create the input/output directories for the images and annotations
-        Path(self.input_dir_images).mkdir(parents=True, exist_ok=True)
-        Path(self.input_dir_annotations).mkdir(parents=True, exist_ok=True)
+        assert Path(self.input_dir_images).exists(), "The input directory for the images does not exist."
+        assert Path(self.input_dir_annotations).exists(), "The input directory for the annotations does not exist."
+        # Create the output directories for the images and annotations
         Path(self.output_dir_images).mkdir(parents=True, exist_ok=True)
         Path(self.output_dir_annotations).mkdir(parents=True, exist_ok=True)
         Path(self.log_folder).mkdir(parents=True, exist_ok=True)
 
-        # Settings the annotations' file extension        
-        self.input_extension_annotations = 'txt' if self.input_format_annotations == 'yolo' else 'xml'
+        # Settings the annotations' file extension
+        self.input_extension_annotations = 'txt' \
+            if self.input_format_annotations == 'yolo' else 'xml'
+
+        # Get the list of images and annotations
+        self.input_images = list(Path(self.input_dir_images).\
+            glob(f"*.{self.input_extension_images}"))
+        self.input_images = [i.as_posix() for i in self.input_images]
+        self.input_annotations = list(Path(self.input_dir_annotations).\
+            glob(f"*.{self.input_extension_annotations}"))
+        input_annotations = [i.as_posix() for i in self.input_annotations]
+
+        # Check if there are any images with the given extension
+        assert self.input_images, f"No images found with extension: {self.input_extension_images}."
+        # Check if there are any annotations with the given extension
+        assert len(input_annotations), \
+            f"No annotations found with \'input' extension: {self.input_extension_annotations}."
+        # Check if the number of annotations is equal to the number of images
+        assert len(self.input_images) == len(input_annotations), \
+            "The number of images is not equal to the number of annotations."
+        # Sort the images and annotations
+        self.input_annotations.sort()
+        self.input_images.sort()
+
+        # Calculate the minimum image dimension
+        minimum_image_dim = float('inf')
+        for img in self.input_images:
+            width, height = imagesize.get(img)
+            minimum_image_dim = min(minimum_image_dim, width, height)
+            # Check if there is an annotation for each image
+            assert Path(img).stem in [Path(a).stem for a in self.input_annotations], \
+                f"No annotation found for image {img}."
+        # Check if the tile size is smaller than the smallest image dimension
+        assert minimum_image_dim >= self.tile_size, \
+            f"The tile size is larger than the smallest image dimension: {minimum_image_dim}. Try setting a smaller tile size."
+
+        # Create the inverse mapping for the annotation labels
+        self.inv_annotation_mapping = {v: k for k, v in self.annotation_mapping.items()}
 
         # Logging settings
         self.logger = logging.getLogger(__name__)
         self.logger.setLevel(logging.DEBUG)
         formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
         # Create a rotating file handler with 5 files that have up to 5 MB size each
-        file_handler = RotatingFileHandler(f'{self.log_folder}/app.log', maxBytes=5*1024*1024, backupCount=5)
+        file_handler = RotatingFileHandler(f'{self.log_folder}/app.log',
+                                           maxBytes=5*1024*1024,
+                                           backupCount=5)
         file_handler.setFormatter(formatter)
         self.logger.addHandler(file_handler)
-        

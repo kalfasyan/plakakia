@@ -142,7 +142,7 @@ __pycache__/
 *.Identifier
 *.xlsx
 *.csv
-*.txt
+#*.txt
 *.xml
 *.json
 *.log

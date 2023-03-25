@@ -2,8 +2,10 @@ import logging
 from dataclasses import dataclass, field
 from logging.handlers import RotatingFileHandler
 from pathlib import Path
-from tqdm import tqdm
+
 import imagesize
+from tqdm import tqdm
+
 
 # Create a dataclass for storing the settings
 @dataclass

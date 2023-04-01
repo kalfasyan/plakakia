@@ -108,3 +108,9 @@ class Settings():
                                            backupCount=5)
         file_handler.setFormatter(formatter)
         self.logger.addHandler(file_handler)
+
+        # Set check_partial to False by default
+        self.check_partial = False
+        
+        # Set default value for pad_size
+        self.pad_size = 10

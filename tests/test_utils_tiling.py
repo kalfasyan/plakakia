@@ -11,7 +11,7 @@ from tempfile import NamedTemporaryFile
 import numpy as np
 import pytest
 from lxml import etree as ET
-
+from collections import namedtuple
 from settings import Settings
 from utils_tiling import (add_border, read_pascalvoc_coordinates_from_xml,
                           read_yolo_coordinates_from_txt, tile_image)
@@ -25,8 +25,11 @@ def test_add_border():
     the add_border() function. The resulting array should have a shape of (12, 12). This test checks whether
     the resulting shape is as expected.
     """
+
     tmp = np.random.randn(10, 10)
-    tmp = add_border(tmp, top=1, bottom=1, left=1, right=1)
+    S = namedtuple('settings', ['top', 'bottom', 'left', 'right', 'pad_size'])
+    settings = S(1, 1, 1, 1, 1)
+    tmp = add_border(tmp, settings=settings)
     assert tmp.shape == (12, 12)
 
 import os
@@ -81,7 +84,6 @@ def test_read_pascalvoc_coordinates_from_xml():
     Returns:
     None
     """
-    from collections import namedtuple
     create_sample_xml()
     S = namedtuple('settings', ['annotation_mapping'])
     settings = S({"cat": "animal", "car": "vehicle"})
@@ -145,13 +147,18 @@ def test_tile_image():
     Returns:
     None
     """
+
     # Create a random input image
     image = np.random.randint(0, 256, size=(512, 512, 3), dtype=np.uint8)
 
     # Call the tile_image function with the random image
     tile_size = 128
     step_size = 64
-    tiles, coordinates = tile_image(image, tile_size, step_size)
+
+    S = namedtuple('settings', ['tile_size', 'step_size'])
+    settings = S(tile_size, step_size)
+
+    tiles, coordinates = tile_image(image, settings)
 
     # Check that the output shape and type is correct
     assert tiles.shape == (49, 128, 128, 3)

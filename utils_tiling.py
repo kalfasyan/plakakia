@@ -13,8 +13,14 @@ from tqdm import tqdm
 logger = logging.getLogger(__name__)
 
 
-def add_border(image, top=None, bottom=None, left=None, right=None, color=[0, 0, 0]):
+def add_border(image, settings, color=[0, 0, 0]):
     """ Add border to an image. """
+
+    top=settings.pad_size
+    bottom=settings.pad_size
+    left=settings.pad_size
+    right=settings.pad_size
+
     if isinstance(image, str):
         image = cv2.imread(image)
 
@@ -98,8 +104,13 @@ def export_yolo_annotation_from_csv(filename=None, output_dir=None):
     dataframe[['prediction_verified','yolo_x','yolo_y','yolo_width','yolo_height']]\
         .to_csv(f"{output_dir}/{filename}.txt", index=False, header=False, sep=' ')
 
-def tile_image(image, tile_size, step_size):
+def tile_image(image, settings=None):
     """ Tile an image into overlapping tiles. """
+
+    # Read the tile size and step size from the settings
+    tile_size=settings.tile_size
+    step_size=settings.step_size
+
     # Compute the number of rows and columns of tiles
     rows = (image.shape[0] - tile_size) // step_size + 1
     cols = (image.shape[1] - tile_size) // step_size + 1
@@ -129,9 +140,12 @@ def tile_image(image, tile_size, step_size):
 
 def get_boxes_inside_tiles(bounding_boxes,
                            tile_coordinates,
-                           partial_boxes=None,
-                           overlap_threshold=None):
+                           settings):
     """ Get the bounding boxes that are inside the tiles. """
+
+    partial_boxes=settings.check_partial
+    overlap_threshold=settings.partial_overlap_threshold
+
     boxes_inside_tiles = [[] for _ in range(len(tile_coordinates))]
 
     for i, tile_coord in enumerate(tile_coordinates):
@@ -183,12 +197,15 @@ def save_boxes(tiles=np.array([]),
                coordinates=np.array([]),
                boxes_in_tiles=[],
                box_classes=[],
-               draw_boxes=True,
-               output_dir=None,
+               settings=None,
                disable_progress_bar=True):
     '''
     Save the tiles with the boxes drawn on them.
     '''
+
+    draw_boxes = settings.draw_boxes
+    output_dir = settings.output_dir_images
+
     # Initialize an array to store the class and coordinates of the boxes and the tile coordinates
     results = np.zeros((0, 13), dtype=np.int32)
 

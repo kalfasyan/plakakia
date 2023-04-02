@@ -7,15 +7,21 @@ sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')
 
 import tempfile
 from tempfile import NamedTemporaryFile
+import yaml
 
 import numpy as np
 import pytest
 from lxml import etree as ET
-from collections import namedtuple
 from settings import Settings
 from utils_tiling import (add_border, read_pascalvoc_coordinates_from_xml,
                           read_yolo_coordinates_from_txt, tile_image)
 
+# Read the settings from the config.yaml file
+with open('config.yaml', 'r') as f:
+    config = yaml.load(f, Loader=yaml.FullLoader)
+
+# Create a settings object
+settings = Settings(**config)
 
 def test_add_border():
     """
@@ -27,8 +33,7 @@ def test_add_border():
     """
 
     tmp = np.random.randn(10, 10)
-    S = namedtuple('settings', ['top', 'bottom', 'left', 'right', 'pad_size'])
-    settings = S(1, 1, 1, 1, 1)
+    settings.pad_size = 1
     tmp = add_border(tmp, settings=settings)
     assert tmp.shape == (12, 12)
 
@@ -85,8 +90,7 @@ def test_read_pascalvoc_coordinates_from_xml():
     None
     """
     create_sample_xml()
-    S = namedtuple('settings', ['annotation_mapping'])
-    settings = S({"cat": "animal", "car": "vehicle"})
+    settings.annotation_mapping = {"cat": "animal", "car": "vehicle"}
     boxes, classes = read_pascalvoc_coordinates_from_xml("sample.xml", settings=settings)
 
     assert boxes == [[10, 20, 30, 40], [50, 60, 80, 90]]
@@ -155,8 +159,8 @@ def test_tile_image():
     tile_size = 128
     step_size = 64
 
-    S = namedtuple('settings', ['tile_size', 'step_size'])
-    settings = S(tile_size, step_size)
+    settings.tile_size = tile_size
+    settings.step_size = step_size
 
     tiles, coordinates = tile_image(image, settings)
 

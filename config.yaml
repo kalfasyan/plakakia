@@ -1,0 +1,24 @@
+{
+    "input_extension_images": "png",
+    "tile_size": 400,
+    "step_size": 400,
+    "input_dir_images": "/home/kalfasyan/data/Data_kernel_tut/images",
+    "input_dir_annotations": "/home/kalfasyan/data/Data_kernel_tut/annotations",
+    "input_format_annotations": "pascal_voc",
+    "output_dir_images": "output/images",
+    "output_dir_annotations": "output/annotations",
+    "output_format_annotations": "pascal_voc",
+    "annotation_mapping": {
+        "kernel": 0,
+        "person": 1,
+        "bottle": 2,
+        "empty": 3,
+        "trafficlight": 4,
+        "speedlimit": 5,
+        "crosswalk": 6,
+        "stop": 7
+    },
+    "draw_boxes": true,
+    "log": true,
+    "log_folder": "logs"
+}

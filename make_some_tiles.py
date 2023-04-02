@@ -9,6 +9,7 @@ from time import perf_counter
 import cv2
 import numpy as np
 from tqdm import tqdm
+import yaml
 
 from settings import Settings
 from utils_tiling import (add_border, get_boxes_inside_tiles,
@@ -22,31 +23,12 @@ random.seed(3)
 [shutil.rmtree(x) if Path(x).exists() else None for x in [
                'tiles/', 'output/', 'annotations/', 'images/', 'logs/']]
 
-settings=Settings(
-    input_extension_images='png',
-    # pad_image=False,
-    tile_size=400,
-    step_size=400,
-    # check_partial=False,
-    # partial_overlap_threshold=0.8,
-    input_dir_images='/home/kalfasyan/data/Data_kernel_tut/images',
-    input_dir_annotations='/home/kalfasyan/data/Data_kernel_tut/annotations',
-    input_format_annotations='pascal_voc',
-    output_dir_images='output/images',
-    output_dir_annotations='output/annotations',
-    output_format_annotations='pascal_voc',
-    annotation_mapping={"kernel": 0,
-                        "person": 1,
-                        "bottle": 2,
-                        "empty": 3,
-                        "trafficlight": 4,
-                        "speedlimit": 5,
-                        "crosswalk": 6,
-                        "stop": 7,},
-    draw_boxes=True, # if true, the tiles will be saved with rectangles visible around the bboxes
-    log=True,
-    log_folder='logs',
-)
+# Read the settings from the config.yaml file
+with open('config.yaml', 'r') as f:
+    config = yaml.load(f, Loader=yaml.FullLoader)
+
+# Create a settings object
+settings = Settings(**config)
 
 # Set the logger
 logger=settings.logger

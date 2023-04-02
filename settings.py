@@ -50,8 +50,8 @@ class Settings():
 
     # Define the initialization method of this dataclass
     def __post_init__(self):
-        assert Path(self.input_dir_images).exists(), "The input directory for the images does not exist."
-        assert Path(self.input_dir_annotations).exists(), "The input directory for the annotations does not exist."
+        assert Path(self.input_dir_images).exists(), f"{self.input_dir_images} image input directory does not exist."
+        assert Path(self.input_dir_annotations).exists(), f"{self.input_dir_annotations} annotations directory does not exist."
         # Create the output directories for the images and annotations
         Path(self.output_dir_images).mkdir(parents=True, exist_ok=True)
         Path(self.output_dir_annotations).mkdir(parents=True, exist_ok=True)

@@ -43,8 +43,8 @@ Here are some recommended steps to follow:
  **NOTE**: For now, only YOLO (`yolo`) and PascalVOC (`pascal_voc`) formats are allowed in the settings. 
   
 **TODO:**  
- ⬜️ Fix reading of classes from annotations (create a 'mapper' dictionary to map classes to numerical values).  
- ⬜️ Read settings from a file (e.g. json).  
+ ☑️ ~~Fix reading of classes from annotations (create a 'mapper' dictionary to map classes to numerical values).~~  
+ ☑️ ~~Read settings from a file (e.g. json).~~  
  ⬜️ Consider bounding boxes in tiles if they *partially* belong to one.  
  ⬜️ Support reading annotations from a dataframe/csv file.  
  ⬜️ Support other annotation formats (e.g. coco).  

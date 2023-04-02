@@ -29,3 +29,4 @@ wheel==0.38.4
 pre-commit
 imagesize
 pytest
+lxml==4.9.2

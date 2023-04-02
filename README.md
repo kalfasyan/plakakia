@@ -12,31 +12,17 @@ Tried to use `numpy` extensively and make this as fast as possible so that one c
 # Requirements
 There is a `requirements.txt` file which you can use to create a virtual environment. It is **highly** recommended that you do that before using this repository.  
 Here are some recommended steps to follow:  
- 1. Download and install [Anaconda](https://www.anaconda.com/). 
+ 1. Download and install [Mamba](https://mamba.readthedocs.io/en/latest/installation.html) (or [Anaconda](https://www.anaconda.com/products/distribution)). 
  2. Create a virtual environment:  
- `conda create -n plakakia jupyterlab nb_conda_kernels ipykernel ipywidgets pip -y`  
+ `mamba create -n plakakia jupyterlab nb_conda_kernels ipykernel ipywidgets pip -y`  
  3. Activate the environment:  
- `conda activate plakakia`
+ `mamba activate plakakia`
  4. Install all requirements:  
  `pip install -r requirements.txt`
 
 # Usage
 
- - The dataclass `Settings` can be used to define your input/output paths for where you placed your images and annodations and where you want them to be exported:  
-    **`Settings(input_extension_images='jpg',
-        # pad_image=False,
-        tile_size=250,
-        step_size=100,
-        input_dir_images='input/images',
-        input_dir_annotations='input/annotations',
-        input_format_annotations='yolo',
-        output_dir_images='output/images',
-        output_dir_annotations='output/annotations',
-        output_format_annotations='yolo',
-        draw_boxes=False,
-        log=True,
-        log_folder='logs',)`**
-
+ - The `config.yaml` file is used to define your input/output paths for where you placed your images and annodations and where you want them to be exported.
  - Place all your data in the input folder split into 'images' and 'annotations'.
  - Run `python make_some_tiles.py`
 

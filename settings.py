@@ -4,6 +4,7 @@ from logging.handlers import RotatingFileHandler
 from pathlib import Path
 
 import imagesize
+import psutil
 from tqdm import tqdm
 
 
@@ -49,6 +50,8 @@ class Settings():
     log_folder: str = 'logs'
     # Boolean flag for validating the settings
     validate_settings: bool = True
+    # Define the number of threads to use
+    num_workers: int = 1
 
     # Define the initialization method of this dataclass
     def __post_init__(self):
@@ -117,3 +120,5 @@ class Settings():
         
         # Set default value for pad_size
         self.pad_size = 10
+        
+        self.num_workers = psutil.cpu_count() if self.num_workers == -1 else self.num_workers

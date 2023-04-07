@@ -413,3 +413,44 @@ def plot_example_tile_with_yolo_annotation(settings=None):
     tile_rgb = cv2.cvtColor(tile, cv2.COLOR_BGR2RGB)
     plt.imshow(tile_rgb)
     plt.show()
+
+def process_tile(t, input_image, input_annotation, settings=None):
+    # Get the file name
+    file_name = Path(input_image).stem
+
+    # Read the image
+    IMAGE_FILENAME = str(Path(settings.input_dir_images).joinpath(f"{file_name}.{settings.input_extension_images}"))
+    image = cv2.imread(IMAGE_FILENAME)
+
+    # Pad the image if needed
+    if settings.pad_image:
+        image = add_border(image, settings=settings, color=[0, 0, 0])
+    image_shape = image.shape
+
+    # Read the coordinates of the bounding boxes from the annotation files
+    bounding_boxes, box_classes = read_coordinates_from_annotations(path=input_annotation,
+                                                                     image_shape=image_shape,
+                                                                     settings=settings)
+
+    # Split the image into tiles and get the coordinates of the tiles
+    tiles, coordinates = tile_image(image.copy(), settings=settings)
+
+    # Get the bounding boxes inside the tiles
+    boxes_in_tiles = get_boxes_inside_tiles(bounding_boxes=bounding_boxes,
+                                             tile_coordinates=coordinates,
+                                             settings=settings)
+
+    # Generate the tiles with the bounding boxes
+    df_results = save_boxes(filename=file_name,
+                            tiles=tiles,
+                            coordinates=coordinates,
+                            boxes_in_tiles=boxes_in_tiles,
+                            box_classes=box_classes,
+                            settings=settings)
+
+    # Save the annotations in Pascal VOC format or YOLO format
+    save_annotations(df_results,
+                     filename=file_name,
+                     settings=settings,
+                     disable_progress_bar=True)
+    return t

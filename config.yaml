@@ -20,5 +20,6 @@
     },
     "validate_settings": false,
     "log": true,
-    "log_folder": "logs"
+    "log_folder": "logs",
+    "num_workers": -1,
 }

@@ -47,6 +47,8 @@ class Settings():
     log: bool = False
     # Define a folder for saving the logs
     log_folder: str = 'logs'
+    # Boolean flag for validating the settings
+    validate_settings: bool = True
 
     # Define the initialization method of this dataclass
     def __post_init__(self):
@@ -81,19 +83,20 @@ class Settings():
         self.input_annotations.sort()
         self.input_images.sort()
 
-        # Calculate the minimum image dimension
-        minimum_image_dim = float('inf')
-        for img in tqdm(self.input_images,
-                        desc='Validating settings..',
-                        total=len(self.input_images)):
-            width, height = imagesize.get(img)
-            minimum_image_dim = min(minimum_image_dim, width, height)
-            # Check if there is an annotation for each image
-            assert Path(img).stem in [Path(a).stem for a in self.input_annotations], \
-                f"No annotation found for image {img}."
-        # Check if the tile size is smaller than the smallest image dimension
-        assert minimum_image_dim >= self.tile_size, \
-            f"The tile size is larger than the smallest image dimension: {minimum_image_dim}. Try setting a smaller tile size."
+        if self.validate_settings:
+            # Calculate the minimum image dimension
+            minimum_image_dim = float('inf')
+            for img in tqdm(self.input_images,
+                            desc='Validating settings..',
+                            total=len(self.input_images)):
+                width, height = imagesize.get(img)
+                minimum_image_dim = min(minimum_image_dim, width, height)
+                # Check if there is an annotation for each image
+                assert Path(img).stem in [Path(a).stem for a in self.input_annotations], \
+                    f"No annotation found for image {img}."
+            # Check if the tile size is smaller than the smallest image dimension
+            assert minimum_image_dim >= self.tile_size, \
+                f"The tile size is larger than the smallest image dimension: {minimum_image_dim}. Try setting a smaller tile size."
 
         # Create the inverse mapping for the annotation labels
         self.inv_annotation_mapping = {v: k for k, v in self.annotation_mapping.items()}

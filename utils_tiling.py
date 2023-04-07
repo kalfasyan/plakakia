@@ -93,7 +93,7 @@ def read_coordinates_from_annotations(path=None, image_shape=None, settings=None
 
     box_classes = [int(i) for i in classes]
 
-    return boxes, box_classes
+    return np.array(boxes), box_classes
 
 def export_yolo_annotation_from_csv(filename=None, output_dir=None):
     """ Export YOLO annotation from csv file. """

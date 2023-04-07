@@ -18,7 +18,7 @@
         "crosswalk": 6,
         "stop": 7
     },
-    "draw_boxes": true,
+    "validate_settings": false,
     "log": true,
     "log_folder": "logs"
 }

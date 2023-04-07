@@ -35,3 +35,4 @@ Here are some recommended steps to follow:
  ⬜️ Support reading annotations from a dataframe/csv file.  
  ⬜️ Support other annotation formats (e.g. coco).  
  ⬜️ Make tiles with multidimensional data (e.g. hdf5 hyperspectral images).  
+ ⬜️ Provide tiling functionality without any labels needed.  

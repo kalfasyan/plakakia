@@ -1,7 +1,7 @@
 {
     "input_extension_images": "png",
-    "tile_size": 400,
-    "step_size": 400,
+    "tile_size": 100,
+    "step_size": 50,
     "input_dir_images": "/home/kalfasyan/data/Data_kernel_tut/images",
     "input_dir_annotations": "/home/kalfasyan/data/Data_kernel_tut/annotations",
     "input_format_annotations": "pascal_voc",

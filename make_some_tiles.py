@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # coding: utf-8
 
-# Author:
+# Author: Ioannis Kalfas (@kalfasyan) (kalfasyan at gmail dot com)
 
 import multiprocessing as mp
 import random

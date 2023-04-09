@@ -3,7 +3,7 @@
 
 # Author:
 
-import concurrent.futures
+import multiprocessing as mp
 import random
 import shutil
 from pathlib import Path
@@ -30,14 +30,22 @@ with open('config.yaml', 'r') as f:
 # Create a settings object
 settings = Settings(**config)
 
-with concurrent.futures.ThreadPoolExecutor(max_workers=settings.num_workers) as executor:
-    futures = []
-    for t, (input_image, input_annotation) in enumerate(zip(settings.input_images, settings.input_annotations)):
-        future = executor.submit(process_tile, t, input_image, input_annotation, settings)
-        futures.append(future)
+def process_tile_wrapper(args):
+    t, input_image, input_annotation, settings = args
+    return process_tile(t, input_image, input_annotation, settings)
 
-    for future in tqdm(concurrent.futures.as_completed(futures), desc='Exporting tiles and annotations..', total=len(futures)):
-        result = future.result()
+# Create a process pool with the desired number of workers
+with mp.Pool(processes=settings.num_workers) as pool:
+    # Prepare the arguments for each task
+    args = [(t, input_image, input_annotation, settings) for t, (input_image, input_annotation) in enumerate(zip(settings.input_images, settings.input_annotations))]
+    
+    # Submit the tasks to the pool
+    results = pool.map(process_tile_wrapper, args)
+    
+# Process the results as needed
+for result in tqdm(results, desc='Exporting tiles and annotations..', total=len(results)):
+    # do something with the result
+    pass
     
 end_time = perf_counter() - start_time
 

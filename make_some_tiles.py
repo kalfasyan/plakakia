@@ -41,12 +41,7 @@ with mp.Pool(processes=settings.num_workers) as pool:
     
     # Submit the tasks to the pool
     results = pool.map(process_tile_wrapper, args)
-    
-# Process the results as needed
-for result in tqdm(results, desc='Exporting tiles and annotations..', total=len(results)):
-    # do something with the result
-    pass
-    
+
 end_time = perf_counter() - start_time
 
 print(f"Elapsed time: {end_time:.2f} seconds")

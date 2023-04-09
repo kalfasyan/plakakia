@@ -204,7 +204,8 @@ def save_boxes(tiles=np.array([]),
     '''
 
     draw_boxes = settings.draw_boxes
-    output_dir = settings.output_dir_images
+    output_dir_images = settings.output_dir_images
+    output_dir_duplicates = settings.output_dir_duplicates
 
     # Initialize an array to store the class and coordinates of the boxes and the tile coordinates
     results = np.zeros((0, 13), dtype=np.int32)
@@ -241,7 +242,7 @@ def save_boxes(tiles=np.array([]),
                                   box[0], box[1], box[2], box[3]]))
 
         # Save the tile with the tile coordinates in the filename
-        cv2.imwrite(f"{output_dir}/tile_{filename}_{tile_coord[0]}_{tile_coord[1]}_{tile_coord[2]}_{tile_coord[3]}.png",
+        cv2.imwrite(f"{output_dir_images}/tile_{filename}_{tile_coord[0]}_{tile_coord[1]}_{tile_coord[2]}_{tile_coord[3]}.png",
             tile)
 
     # Create a dataframe with the results
@@ -249,6 +250,10 @@ def save_boxes(tiles=np.array([]),
                                         'box_class',
                                         'box_x1','box_y1','box_x2','box_y2',
                                         'old_box_x1','old_box_y1','old_box_x2','old_box_y2'])
+    
+    # Save the dataframe as a parquet file
+    if settings.clear_duplicates:
+        results_df.to_parquet(Path(output_dir_duplicates) / f"tile_{filename}.parquet", index=False)
 
     return results_df
 
@@ -433,7 +438,8 @@ def process_tile(t, input_image, input_annotation, settings=None):
                                                                      settings=settings)
 
     # Split the image into tiles and get the coordinates of the tiles
-    tiles, coordinates = tile_image(image.copy(), settings=settings)
+    tiles, coordinates = tile_image(image.copy(),
+                                    settings=settings)
 
     # Get the bounding boxes inside the tiles
     boxes_in_tiles = get_boxes_inside_tiles(bounding_boxes=bounding_boxes,
@@ -454,3 +460,15 @@ def process_tile(t, input_image, input_annotation, settings=None):
                      settings=settings,
                      disable_progress_bar=True)
     return t
+
+def clear_duplicates(settings):
+    all_subs = []
+    results = Path(settings.output_dir_duplicates).glob("*.parquet")
+    for file in tqdm(results, desc="Gathering results for duplicate removal.."):
+        sub = pd.read_parquet(file)
+        sub['filename'] = file.stem
+        all_subs.append(sub)
+        # Delete the file
+        file.unlink()
+    results_df = pd.concat(all_subs, ignore_index=True)
+    results_df.to_csv(Path(settings.output_dir_duplicates) / "all_results.csv", index=False)

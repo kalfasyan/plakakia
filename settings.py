@@ -52,6 +52,8 @@ class Settings():
     validate_settings: bool = True
     # Define the number of threads to use
     num_workers: int = 1
+    # Define a flag for removing duplicate tiles
+    clear_duplicates: bool = False
 
     # Define the initialization method of this dataclass
     def __post_init__(self):
@@ -122,3 +124,7 @@ class Settings():
         self.pad_size = 10
         
         self.num_workers = psutil.cpu_count() if self.num_workers == -1 else self.num_workers
+        
+        if self.clear_duplicates:
+            self.output_dir_duplicates = Path(self.output_dir_images).parent / "duplicates"
+            Path(f"{self.output_dir_duplicates}").mkdir(parents=True, exist_ok=True)

@@ -13,7 +13,7 @@ import yaml
 from tqdm import tqdm
 
 from settings import Settings
-from utils_tiling import process_tile
+from utils_tiling import process_tile, clear_duplicates
 
 random.seed(3)
 
@@ -41,6 +41,9 @@ with mp.Pool(processes=settings.num_workers) as pool:
     
     # Submit the tasks to the pool
     results = pool.map(process_tile_wrapper, args)
+
+if settings.clear_duplicates:
+    clear_duplicates(settings)
 
 end_time = perf_counter() - start_time
 

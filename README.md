@@ -5,7 +5,7 @@
   
 ![Alt text](logo/logo.png?raw=true "This is a \"plakaki\", meaning tile in Greek.")  
 
-The reason for making this tool is to handle image tiling that takes into account bounding boxes that exist inside the image. For now, I've only considered rectangular tiles. An image is divided into tiles based on a given `tile_size` and `step_size`. Overlapping tiles are handled fine, too. Bounding boxes belong to a tile only if they are *fully* inside it, but I'm planning to support partial overlap as well. Note that such methods create duplicate bounding boxes (i.e. a bounding box can appear in more than one tiles). Soon, there will be options for avoiding duplicates. Of course, depending on the strictness of the duplicate deletion method there is a potential cost of missing some bounding boxes altogether.  
+The reason for making this tool is to handle image tiling that takes into account bounding boxes that exist inside the image. For now, I've only considered rectangular tiles. An image is divided into tiles based on a given `tile_size` and `step_size`. Overlapping tiles are handled fine, too. Bounding boxes belong to a tile only if they are *fully* inside it, but I'm planning to support partial overlap as well. Note that such methods create duplicate bounding boxes (i.e. a bounding box can appear in more than one tiles). There is an option for avoiding duplicates. Note that depending on the selection of `tile_size` and `step_size`, there is a potential cost of missing some bounding boxes altogether sincce the duplicate deletion method is strictly applied. Might consider adding more flexible methods in the future.  
   
 In this package, I employ `multiprocessing` and `numpy` extensively to make this as fast as possible so that one can use it with thousands of images. For benchmarks on some public datasets, see below.  
 
@@ -31,6 +31,8 @@ Here are some recommended steps to follow:
 **TODO:**  
  ☑️ ~~Fix reading of classes from annotations (create a 'mapper' dictionary to map classes to numerical values).~~  
  ☑️ ~~Read settings from a file (e.g. json).~~  
+ ☑️ ~~Removing all tiles with duplicate bounding boxes (that appear in other tiles).~~  
+ ⬜️ Add less strict (flexible) duplicate removal methods to avoid missing bounding boxes.
  ⬜️ Consider bounding boxes in tiles if they *partially* belong to one.  
  ⬜️ Support reading annotations from a dataframe/csv file.  
  ⬜️ Support other annotation formats (e.g. coco).  

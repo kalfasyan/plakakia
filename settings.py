@@ -12,8 +12,10 @@ from tqdm import tqdm
 @dataclass
 class Settings():
     """ Settings for the tiling process. """
-    # Define the image file extensions
+    # Define the image input file extensions
     input_extension_images: str = 'jpg'
+    # Define the image output file extension
+    output_extension_images: str = 'jpg'
     # Set the annotation file extensions
     input_extension_annotations: str = 'txt'
     # Whether to pad the image with a border
@@ -52,6 +54,8 @@ class Settings():
     validate_settings: bool = True
     # Define the number of threads to use
     num_workers: int = 1
+    # Define a flag for removing duplicate tiles
+    clear_duplicates: bool = False
 
     # Define the initialization method of this dataclass
     def __post_init__(self):
@@ -65,6 +69,10 @@ class Settings():
         # Settings the annotations' file extension
         self.input_extension_annotations = 'txt' \
             if self.input_format_annotations == 'yolo' else 'xml'
+
+        # Settings the annotations' output file extension
+        self.output_extension_annotations = 'txt' \
+            if self.output_format_annotations == 'yolo' else 'xml'
 
         # Get the list of images and annotations
         self.input_images = list(Path(self.input_dir_images).\
@@ -117,8 +125,12 @@ class Settings():
 
         # Set check_partial to False by default
         self.check_partial = False
-        
+
         # Set default value for pad_size
         self.pad_size = 10
-        
+
         self.num_workers = psutil.cpu_count() if self.num_workers == -1 else self.num_workers
+
+        if self.clear_duplicates:
+            self.output_dir_duplicates = Path(self.output_dir_images).parent / "duplicates"
+            Path(f"{self.output_dir_duplicates}").mkdir(parents=True, exist_ok=True)

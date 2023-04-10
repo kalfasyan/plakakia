@@ -22,4 +22,5 @@
     "log": true,
     "log_folder": "logs",
     "num_workers": -1,
+    "clear_duplicates": true,
 }

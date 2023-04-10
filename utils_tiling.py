@@ -203,9 +203,6 @@ def save_boxes(tiles=np.array([]),
     Save the tiles with the boxes drawn on them.
     '''
 
-    draw_boxes = settings.draw_boxes
-    output_dir = settings.output_dir_images
-
     # Initialize an array to store the class and coordinates of the boxes and the tile coordinates
     results = np.zeros((0, 13), dtype=np.int32)
 
@@ -225,14 +222,6 @@ def save_boxes(tiles=np.array([]),
             new_x2 = box[2] - tile_coord[0]
             new_y2 = box[3] - tile_coord[1]
 
-            if draw_boxes:
-                cv2.rectangle(tile, (new_x1, new_y1), (new_x2, new_y2), (0, 255, 255), 2)
-                # Add the class on top of the rectangle
-                cv2.putText(tile,
-                            str(box_classes[b]),
-                            (new_x1, new_y1),
-                            cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 255), 2)
-
             # Stack the class+coordinates of the boxes w/ results array and tile coordinates
             results = np.vstack((results,
                                  [tile_coord[0], tile_coord[1], tile_coord[2], tile_coord[3],
@@ -241,14 +230,20 @@ def save_boxes(tiles=np.array([]),
                                   box[0], box[1], box[2], box[3]]))
 
         # Save the tile with the tile coordinates in the filename
-        cv2.imwrite(f"{output_dir}/tile_{filename}_{tile_coord[0]}_{tile_coord[1]}_{tile_coord[2]}_{tile_coord[3]}.png",
-            tile)
+        path = f"{settings.output_dir_images}/tile_{filename}_{tile_coord[0]}_{tile_coord[1]}_{tile_coord[2]}_{tile_coord[3]}.{settings.output_extension_images}"
+        cv2.imwrite(path, tile)
 
     # Create a dataframe with the results
-    results_df = pd.DataFrame(results, columns=['tile_x1','tile_y1','tile_x2','tile_y2',
+    results_df = pd.DataFrame(results, 
+                              columns=['tile_x1','tile_y1','tile_x2','tile_y2',
                                         'box_class',
                                         'box_x1','box_y1','box_x2','box_y2',
                                         'old_box_x1','old_box_y1','old_box_x2','old_box_y2'])
+
+    # Save the dataframe as a parquet file
+    if settings.clear_duplicates:
+        results_df.to_parquet(Path(settings.output_dir_duplicates) / f"tile_{filename}.parquet", 
+                              index=False)
 
     return results_df
 
@@ -274,9 +269,10 @@ def save_yolo_annotations_from_df(dataframe,
                        desc='Saving YOLO annotations',
                        disable=disable_progress_bar,
                        total=len(group.count())):
-        with open(f"{settings.output_dir_annotations}/tile_{filename}_{i[0]}_{i[1]}_{i[2]}_{i[3]}.txt",
+        with open(Path(settings.output_dir_annotations) / f"tile_{filename}_{i[0]}_{i[1]}_{i[2]}_{i[3]}.txt",
                   mode="a+",
                   encoding="utf-8") as file:
+
             for _, row in sub.iterrows():
                 file.write(f"{int(row['box_class'])} {row['yolo_x']} {row['yolo_y']} {row['yolo_w']} {row['yolo_h']}\n")
 
@@ -310,7 +306,7 @@ def save_to_pascal_voc_from_df(dataframe,
         folder = ET.SubElement(annotation, "folder")
         folder.text = settings.output_dir_annotations
         filename = ET.SubElement(annotation, "filename")
-        filename.text = f"{tile_name}.png"
+        filename.text = f"{tile_name}.{settings.output_extension_images}"
         size = ET.SubElement(annotation, "size")
         width = ET.SubElement(size, "width")
         width.text = str(np.abs(tile_x2 - tile_x1))
@@ -359,16 +355,6 @@ def save_annotations(dataframe=None, filename=None, settings=None, disable_progr
     else:
         raise ValueError("The output format of the annotations is not valid.")
 
-def perform_quality_checks(dataframe, bounding_boxes, settings):
-    ''' Check if all the bboxes are saved '''
-    saved_bboxes_coords = dataframe[['old_box_x1','old_box_y1','old_box_x2','old_box_y2']].values
-    unique_rows, row_counts = np.unique(saved_bboxes_coords, axis=0, return_counts=True)
-    logger.info(f"{len(saved_bboxes_coords) - len(unique_rows)} \
-        bbox(es) saved more than one time.")\
-            if settings.log else None
-    # Check if the saved_bboxes_coords are a subset of the original_bboxes_coords
-    assert np.all(np.isin(saved_bboxes_coords, bounding_boxes)), "Not all bboxes saved."
-
 def convert_yolo_to_xyxy(yolo_x, yolo_y, yolo_w, yolo_h, image_width, image_height):
     """ Convert YOLO format to XYXY format. """
     x_1 = int((yolo_x - yolo_w/2) * image_width)
@@ -381,7 +367,7 @@ def plot_example_tile_with_yolo_annotation(settings=None):
     """ Plot an example tile with the corresponding YOLO annotation. """
 
     # Get all image files from the tiles folder
-    tile_imagepaths = list(Path(settings.output_dir_images).glob('*.png'))
+    tile_imagepaths = list(Path(settings.output_dir_images).glob('*.{settings.output_extension_images}'))
 
     # Randomly select a tile from tile_imagepaths list
     img_selection  = random.choice(tile_imagepaths)
@@ -415,6 +401,7 @@ def plot_example_tile_with_yolo_annotation(settings=None):
     plt.show()
 
 def process_tile(t, input_image, input_annotation, settings=None):
+    """ The main function to process a tile. """
     # Get the file name
     file_name = Path(input_image).stem
 
@@ -433,12 +420,16 @@ def process_tile(t, input_image, input_annotation, settings=None):
                                                                      settings=settings)
 
     # Split the image into tiles and get the coordinates of the tiles
-    tiles, coordinates = tile_image(image.copy(), settings=settings)
+    tiles, coordinates = tile_image(image.copy(),
+                                    settings=settings)
 
     # Get the bounding boxes inside the tiles
-    boxes_in_tiles = get_boxes_inside_tiles(bounding_boxes=bounding_boxes,
-                                             tile_coordinates=coordinates,
-                                             settings=settings)
+    if bounding_boxes.shape[0] > 0:
+        boxes_in_tiles = get_boxes_inside_tiles(bounding_boxes=bounding_boxes,
+                                                tile_coordinates=coordinates,
+                                                settings=settings)
+    else:
+        return t
 
     # Generate the tiles with the bounding boxes
     df_results = save_boxes(filename=file_name,
@@ -454,3 +445,48 @@ def process_tile(t, input_image, input_annotation, settings=None):
                      settings=settings,
                      disable_progress_bar=True)
     return t
+
+def clear_duplicates(settings):
+    """ Clear the duplicate tiles. """
+
+    # Gather all the results from the different processes
+    # since settings.duplicates is set to True
+    # the results are saved in parquet files
+    # in the settings.output_dir_duplicates folder
+    all_subs = []
+    results = Path(settings.output_dir_duplicates).glob("*.parquet")
+    for file in tqdm(results, desc="Gathering results for duplicate removal.."):
+        sub = pd.read_parquet(file)
+        sub['filename'] = file.stem
+        all_subs.append(sub)
+        # Delete the file
+        file.unlink()
+    results_df = pd.concat(all_subs, ignore_index=True)
+
+    # Format the filename to match the format of the saved 
+    # images and annotations
+    results_df['filename'] = results_df['filename']+"_"+ \
+                            results_df['tile_x1'].astype(str)+"_"+ \
+                                results_df['tile_y1'].astype(str)+"_"+ \
+                                    results_df['tile_x2'].astype(str)+"_"+ \
+                                        results_df['tile_y2'].astype(str)
+
+    # Define two sets to store all unique filenames and 
+    # filenames without duplicates so that we only keep the latter.
+    all_filenames = set(results_df['filename'].unique().tolist())
+    no_duplicates = set(results_df[
+        ~results_df[
+            ['old_box_x1', 'old_box_y1', 'old_box_x2', 'old_box_y2']
+            ].duplicated()].filename.tolist())
+
+    # Loop through all images and annotations and remove duplicates
+    for filename in tqdm(all_filenames, desc="Removing duplicates..", total=len(all_filenames)):
+        if filename in no_duplicates:
+            continue
+        else:
+            annotation_file = Path(settings.output_dir_annotations) / \
+                f"{filename}.{settings.output_extension_annotations}"
+            image_file = Path(settings.output_dir_images) / \
+                f"{filename}.{settings.output_extension_images}"
+            annotation_file.unlink()
+            image_file.unlink()

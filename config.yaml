@@ -1,13 +1,14 @@
 {
-    "input_extension_images": "png",
+    "input_extension_images": "jpg",
+    "output_extension_images": "png",
     "tile_size": 100,
     "step_size": 50,
-    "input_dir_images": "/home/kalfasyan/data/Data_kernel_tut/images",
-    "input_dir_annotations": "/home/kalfasyan/data/Data_kernel_tut/annotations",
-    "input_format_annotations": "pascal_voc",
+    "input_dir_images": "/home/kalfasyan/data/hardhatworkersv2/train",
+    "input_dir_annotations": "/home/kalfasyan/data/hardhatworkersv2/train",
+    "input_format_annotations": "yolo",
     "output_dir_images": "output/images",
     "output_dir_annotations": "output/annotations",
-    "output_format_annotations": "pascal_voc",
+    "output_format_annotations": "yolo",
     "annotation_mapping": {
         "kernel": 0,
         "person": 1,
@@ -22,5 +23,5 @@
     "log": true,
     "log_folder": "logs",
     "num_workers": -1,
-    "clear_duplicates": true,
+    "clear_duplicates": false,
 }

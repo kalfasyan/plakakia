@@ -230,7 +230,7 @@ def save_boxes(tiles=np.array([]),
                                   box[0], box[1], box[2], box[3]]))
 
         # Save the tile with the tile coordinates in the filename
-        path = f"{settings.output_dir_images}/tile_{filename}_{tile_coord[0]}_{tile_coord[1]}_{tile_coord[2]}_{tile_coord[3]}.png"
+        path = f"{settings.output_dir_images}/tile_{filename}_{tile_coord[0]}_{tile_coord[1]}_{tile_coord[2]}_{tile_coord[3]}.{settings.output_extension_images}"
         cv2.imwrite(path, tile)
 
     # Create a dataframe with the results
@@ -306,7 +306,7 @@ def save_to_pascal_voc_from_df(dataframe,
         folder = ET.SubElement(annotation, "folder")
         folder.text = settings.output_dir_annotations
         filename = ET.SubElement(annotation, "filename")
-        filename.text = f"{tile_name}.png"
+        filename.text = f"{tile_name}.{settings.output_extension_images}"
         size = ET.SubElement(annotation, "size")
         width = ET.SubElement(size, "width")
         width.text = str(np.abs(tile_x2 - tile_x1))
@@ -367,7 +367,7 @@ def plot_example_tile_with_yolo_annotation(settings=None):
     """ Plot an example tile with the corresponding YOLO annotation. """
 
     # Get all image files from the tiles folder
-    tile_imagepaths = list(Path(settings.output_dir_images).glob('*.png'))
+    tile_imagepaths = list(Path(settings.output_dir_images).glob('*.{settings.output_extension_images}'))
 
     # Randomly select a tile from tile_imagepaths list
     img_selection  = random.choice(tile_imagepaths)
@@ -448,6 +448,11 @@ def process_tile(t, input_image, input_annotation, settings=None):
 
 def clear_duplicates(settings):
     """ Clear the duplicate tiles. """
+
+    # Gather all the results from the different processes
+    # since settings.duplicates is set to True
+    # the results are saved in parquet files
+    # in the settings.output_dir_duplicates folder
     all_subs = []
     results = Path(settings.output_dir_duplicates).glob("*.parquet")
     for file in tqdm(results, desc="Gathering results for duplicate removal.."):
@@ -457,4 +462,31 @@ def clear_duplicates(settings):
         # Delete the file
         file.unlink()
     results_df = pd.concat(all_subs, ignore_index=True)
-    results_df.to_csv(Path(settings.output_dir_duplicates) / "all_results.csv", index=False)
+
+    # Format the filename to match the format of the saved 
+    # images and annotations
+    results_df['filename'] = results_df['filename']+"_"+ \
+                            results_df['tile_x1'].astype(str)+"_"+ \
+                                results_df['tile_y1'].astype(str)+"_"+ \
+                                    results_df['tile_x2'].astype(str)+"_"+ \
+                                        results_df['tile_y2'].astype(str)
+
+    # Define two sets to store all unique filenames and 
+    # filenames without duplicates so that we only keep the latter.
+    all_filenames = set(results_df['filename'].unique().tolist())
+    no_duplicates = set(results_df[
+        ~results_df[
+            ['old_box_x1', 'old_box_y1', 'old_box_x2', 'old_box_y2']
+            ].duplicated()].filename.tolist())
+
+    # Loop through all images and annotations and remove duplicates
+    for filename in tqdm(all_filenames, desc="Removing duplicates..", total=len(all_filenames)):
+        if filename in no_duplicates:
+            continue
+        else:
+            annotation_file = Path(settings.output_dir_annotations) / \
+                f"{filename}.{settings.output_extension_annotations}"
+            image_file = Path(settings.output_dir_images) / \
+                f"{filename}.{settings.output_extension_images}"
+            annotation_file.unlink()
+            image_file.unlink()

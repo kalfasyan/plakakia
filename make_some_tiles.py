@@ -45,9 +45,9 @@ with mp.Pool(processes=settings.num_workers) as pool:
     # Submit the tasks to the pool
     results = pool.map(process_tile_wrapper, args)
 
-if settings.clear_duplicates:
-    clear_duplicates(settings)
-
 end_time = perf_counter() - start_time
 
-print(f"Elapsed time: {end_time:.2f} seconds")
+print(f"Finished making tiles! Elapsed time: {end_time:.2f} seconds")
+
+if settings.clear_duplicates:
+    clear_duplicates(settings)

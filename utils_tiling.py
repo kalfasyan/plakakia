@@ -203,10 +203,6 @@ def save_boxes(tiles=np.array([]),
     Save the tiles with the boxes drawn on them.
     '''
 
-    draw_boxes = settings.draw_boxes
-    output_dir_images = settings.output_dir_images
-    output_dir_duplicates = settings.output_dir_duplicates
-
     # Initialize an array to store the class and coordinates of the boxes and the tile coordinates
     results = np.zeros((0, 13), dtype=np.int32)
 
@@ -226,14 +222,6 @@ def save_boxes(tiles=np.array([]),
             new_x2 = box[2] - tile_coord[0]
             new_y2 = box[3] - tile_coord[1]
 
-            if draw_boxes:
-                cv2.rectangle(tile, (new_x1, new_y1), (new_x2, new_y2), (0, 255, 255), 2)
-                # Add the class on top of the rectangle
-                cv2.putText(tile,
-                            str(box_classes[b]),
-                            (new_x1, new_y1),
-                            cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 255), 2)
-
             # Stack the class+coordinates of the boxes w/ results array and tile coordinates
             results = np.vstack((results,
                                  [tile_coord[0], tile_coord[1], tile_coord[2], tile_coord[3],
@@ -242,18 +230,20 @@ def save_boxes(tiles=np.array([]),
                                   box[0], box[1], box[2], box[3]]))
 
         # Save the tile with the tile coordinates in the filename
-        cv2.imwrite(f"{output_dir_images}/tile_{filename}_{tile_coord[0]}_{tile_coord[1]}_{tile_coord[2]}_{tile_coord[3]}.png",
-            tile)
+        path = f"{settings.output_dir_images}/tile_{filename}_{tile_coord[0]}_{tile_coord[1]}_{tile_coord[2]}_{tile_coord[3]}.png"
+        cv2.imwrite(path, tile)
 
     # Create a dataframe with the results
-    results_df = pd.DataFrame(results, columns=['tile_x1','tile_y1','tile_x2','tile_y2',
+    results_df = pd.DataFrame(results, 
+                              columns=['tile_x1','tile_y1','tile_x2','tile_y2',
                                         'box_class',
                                         'box_x1','box_y1','box_x2','box_y2',
                                         'old_box_x1','old_box_y1','old_box_x2','old_box_y2'])
-    
+
     # Save the dataframe as a parquet file
     if settings.clear_duplicates:
-        results_df.to_parquet(Path(output_dir_duplicates) / f"tile_{filename}.parquet", index=False)
+        results_df.to_parquet(Path(settings.output_dir_duplicates) / f"tile_{filename}.parquet", 
+                              index=False)
 
     return results_df
 
@@ -279,9 +269,10 @@ def save_yolo_annotations_from_df(dataframe,
                        desc='Saving YOLO annotations',
                        disable=disable_progress_bar,
                        total=len(group.count())):
-        with open(f"{settings.output_dir_annotations}/tile_{filename}_{i[0]}_{i[1]}_{i[2]}_{i[3]}.txt",
+        with open(Path(settings.output_dir_annotations) / f"tile_{filename}_{i[0]}_{i[1]}_{i[2]}_{i[3]}.txt",
                   mode="a+",
                   encoding="utf-8") as file:
+
             for _, row in sub.iterrows():
                 file.write(f"{int(row['box_class'])} {row['yolo_x']} {row['yolo_y']} {row['yolo_w']} {row['yolo_h']}\n")
 
@@ -364,16 +355,6 @@ def save_annotations(dataframe=None, filename=None, settings=None, disable_progr
     else:
         raise ValueError("The output format of the annotations is not valid.")
 
-def perform_quality_checks(dataframe, bounding_boxes, settings):
-    ''' Check if all the bboxes are saved '''
-    saved_bboxes_coords = dataframe[['old_box_x1','old_box_y1','old_box_x2','old_box_y2']].values
-    unique_rows, row_counts = np.unique(saved_bboxes_coords, axis=0, return_counts=True)
-    logger.info(f"{len(saved_bboxes_coords) - len(unique_rows)} \
-        bbox(es) saved more than one time.")\
-            if settings.log else None
-    # Check if the saved_bboxes_coords are a subset of the original_bboxes_coords
-    assert np.all(np.isin(saved_bboxes_coords, bounding_boxes)), "Not all bboxes saved."
-
 def convert_yolo_to_xyxy(yolo_x, yolo_y, yolo_w, yolo_h, image_width, image_height):
     """ Convert YOLO format to XYXY format. """
     x_1 = int((yolo_x - yolo_w/2) * image_width)
@@ -420,6 +401,7 @@ def plot_example_tile_with_yolo_annotation(settings=None):
     plt.show()
 
 def process_tile(t, input_image, input_annotation, settings=None):
+    """ The main function to process a tile. """
     # Get the file name
     file_name = Path(input_image).stem
 
@@ -442,9 +424,12 @@ def process_tile(t, input_image, input_annotation, settings=None):
                                     settings=settings)
 
     # Get the bounding boxes inside the tiles
-    boxes_in_tiles = get_boxes_inside_tiles(bounding_boxes=bounding_boxes,
-                                             tile_coordinates=coordinates,
-                                             settings=settings)
+    if bounding_boxes.shape[0] > 0:
+        boxes_in_tiles = get_boxes_inside_tiles(bounding_boxes=bounding_boxes,
+                                                tile_coordinates=coordinates,
+                                                settings=settings)
+    else:
+        return t
 
     # Generate the tiles with the bounding boxes
     df_results = save_boxes(filename=file_name,
@@ -462,6 +447,7 @@ def process_tile(t, input_image, input_annotation, settings=None):
     return t
 
 def clear_duplicates(settings):
+    """ Clear the duplicate tiles. """
     all_subs = []
     results = Path(settings.output_dir_duplicates).glob("*.parquet")
     for file in tqdm(results, desc="Gathering results for duplicate removal.."):

@@ -5,16 +5,22 @@ import sys
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
 
+import json
 import tempfile
+from pathlib import Path
 from tempfile import NamedTemporaryFile
-import yaml
 
 import numpy as np
+import pandas as pd
 import pytest
+import yaml
 from lxml import etree as ET
+
 from settings import Settings
-from utils_tiling import (add_border, read_pascalvoc_coordinates_from_xml,
-                          read_yolo_coordinates_from_txt, tile_image)
+from utils_annotations import (read_coco_coordinates_from_json,
+                               read_pascalvoc_coordinates_from_xml,
+                               read_yolo_coordinates_from_txt)
+from utils_tiling import add_border, tile_image
 
 # Read the settings from the config.yaml file
 with open('config.yaml', 'r') as f:
@@ -49,7 +55,7 @@ def create_sample_xml():
     None
     """
     root = ET.Element("annotation")
-    
+
     obj1 = ET.SubElement(root, "object")
     name1 = ET.SubElement(obj1, "name")
     name1.text = "cat"
@@ -62,7 +68,7 @@ def create_sample_xml():
     xmax1.text = "30"
     ymax1 = ET.SubElement(bbox1, "ymax")
     ymax1.text = "40"
-    
+
     obj2 = ET.SubElement(root, "object")
     name2 = ET.SubElement(obj2, "name")
     name2.text = "car"
@@ -130,7 +136,7 @@ def test_read_yolo_coordinates_from_txt():
 
     # Call the read_yolo_coordinates_from_txt function with the temporary file
     image_shape = (800, 600, 3)
-    boxes, classes = read_yolo_coordinates_from_txt(path=path, image_shape=image_shape, settings=None)
+    boxes, classes = read_yolo_coordinates_from_txt(path=path, image_shape=image_shape)
 
     # Check that the output is as expected
     expected_boxes = [[150, 200, 450, 600], [119, 160, 240, 320]]
@@ -140,7 +146,41 @@ def test_read_yolo_coordinates_from_txt():
 
     # Delete the temporary file
     os.remove(path)
-    
+
+def test_read_yolo_coordinates_from_txt_invalid_file():
+    """
+    Tests the function read_yolo_coordinates_from_txt with an invalid file path, 
+    expecting a FileNotFoundError to be raised.
+
+    Returns:
+    None
+    """
+    with pytest.raises(FileNotFoundError):
+        read_yolo_coordinates_from_txt('nonexistent.txt')
+
+def test_read_yolo_coordinates_from_txt_invalid_image_shape():
+    """
+    Tests the function read_yolo_coordinates_from_txt with an invalid image shape, 
+    expecting a ValueError to be raised.
+
+    Returns:
+    None
+    """
+    # Create a temporary file with some data in YOLO format
+    data = "0 0.5 0.5 0.5 0.5\n1 0.3 0.3 0.2 0.2\n"
+    with tempfile.NamedTemporaryFile(mode='w', delete=False) as tmp_file:
+        tmp_file.write(data)
+        tmp_file.flush()
+        path = tmp_file.name
+
+    # Call the read_yolo_coordinates_from_txt function with the temporary file
+    image_shape = (800, 600)
+    with pytest.raises(ValueError):
+        read_yolo_coordinates_from_txt(path=path, image_shape=image_shape)
+
+    # Delete the temporary file
+    os.remove(path)
+
 def test_tile_image():
     """
     Tests the function tile_image by creating a random input image, tiling it, and 
@@ -180,3 +220,15 @@ def test_tile_image():
         tile = tiles[i]
         assert tile.shape == (tile_size, tile_size, 3)
         assert np.array_equal(tile, image[y1:y2, x1:x2])
+
+def test_tile_image_invalid_image():
+    """
+    Tests the function tile_image with an invalid image, expecting a ValueError to be 
+    raised.
+
+    Returns:
+    None
+    """
+    image = np.random.randint(0, 256, size=(512, 512), dtype=np.uint8)
+    with pytest.raises(IndexError):
+        tile_image(image, settings)

@@ -41,6 +41,8 @@ Here are some recommended steps to follow:
 
 ## Benchmarks
 
+**Benchmarked on**: AMD Ryzen 5 PRO 6650U; 6 cores; 12 threads; 2.9 GHz
+
 | Dataset | Source | Formats (images/labels) | Number of images | tile_size | step_size | tiles generated | plakakia performance |
 | ------------- | ------------- | ------------- | ------------- | ------------- | ------------- | ------------- | ------------- |
 | Traffic Signs  | [Kaggle](https://www.kaggle.com/datasets/valentynsichkar/traffic-signs-dataset-in-yolo-format) | jpg/YOLO | 741  | 300 | 200 | 1.695 | 2,8 sec | 

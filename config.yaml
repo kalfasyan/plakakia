@@ -20,7 +20,7 @@
         "stop": 7
     },
     "validate_settings": false,
-    "log": true,
+    "log": false,
     "log_folder": "logs",
     "num_workers": -1,
     "clear_duplicates": false,

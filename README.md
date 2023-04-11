@@ -32,10 +32,10 @@ Here are some recommended steps to follow:
  ☑️ ~~Fix reading of classes from annotations (create a 'mapper' dictionary to map classes to numerical values).~~  
  ☑️ ~~Read settings from a file (e.g. json).~~  
  ☑️ ~~Removing all tiles with duplicate bounding boxes (that appear in other tiles).~~  
+ ☑️ ~~Support other annotation formats (e.g. coco).~~ (only input for now)  
  ⬜️ Add less strict (flexible) duplicate removal methods to avoid missing bounding boxes.  
  ⬜️ Consider bounding boxes in tiles if they *partially* belong to one.  
  ⬜️ Support reading annotations from a dataframe/csv file.  
- ⬜️ Support other annotation formats (e.g. coco).  
  ⬜️ Make tiles with multidimensional data (e.g. hdf5 hyperspectral images).  
  ⬜️ Provide tiling functionality without any labels needed.  
 

@@ -4,6 +4,7 @@ import os
 import numpy as np
 from tqdm import tqdm
 from pathlib import Path
+import json
 
 def read_pascalvoc_coordinates_from_xml(filename=str, settings=None):
     ''' Read coordinates from PascalVOC xml file. '''
@@ -29,7 +30,7 @@ def read_pascalvoc_coordinates_from_xml(filename=str, settings=None):
 
     return boxes, classes
 
-def read_yolo_coordinates_from_txt(path=None, image_shape=(), settings=None):
+def read_yolo_coordinates_from_txt(path=None, image_shape=()):
     """ Read coordinates from YOLO txt file. """
     with open(path, mode='r', encoding="utf-8") as file: # type: ignore
         lines = file.readlines()
@@ -58,12 +59,38 @@ def read_yolo_coordinates_from_txt(path=None, image_shape=(), settings=None):
         boxes.append([x_1, y_1, x_2, y_2])
     return boxes, classes
 
-def read_coordinates_from_annotations(path=None, image_shape=None, settings=None):
+def read_coco_coordinates_from_json(filename, dir_images) -> pd.DataFrame:
+    """Read coordinates from COCO format json file."""
+    with open(filename, 'r', encoding='utf-8') as f:
+        data = json.load(f)
+
+    df_anns = pd.DataFrame(data['annotations'])
+    df_imgs = pd.DataFrame(data['images'])
+    boxes = []
+    for annotation in data['annotations']:
+        x, y, w, h = annotation['bbox']
+        x_1, y_1 = int(x), int(y)
+        x_2, y_2 = int(x+w), int(y+h)
+        boxes.append([x_1, y_1, x_2, y_2])
+
+    df_merged = pd.merge(df_anns, df_imgs, left_on='image_id', right_on='id')
+    df_merged['boxes'] = boxes
+    df_merged['file_name'] = df_merged['file_name'].apply(lambda x: (Path(dir_images) / x).as_posix())
+
+    return df_merged
+
+def read_coordinates_from_annotations(img_path=None, 
+                                      ant_path=None,
+                                      image_shape=None, 
+                                      settings=None) -> tuple:
     """ Read coordinates from annotations. """
     if settings.input_format_annotations == 'yolo':
-        boxes, classes = read_yolo_coordinates_from_txt(path, image_shape, settings)
+        boxes, classes = read_yolo_coordinates_from_txt(ant_path, image_shape)
     elif settings.input_format_annotations == 'pascal_voc':
-        boxes, classes = read_pascalvoc_coordinates_from_xml(path, settings)
+        boxes, classes = read_pascalvoc_coordinates_from_xml(ant_path, settings)
+    elif settings.input_format_annotations == 'coco':
+        boxes = settings.df_coco.query("file_name == @img_path").boxes.tolist()
+        classes = settings.df_coco.query("file_name == @img_path").category_id.tolist()
     else:
         raise ValueError(f"Annotation format {settings.input_format_annotations} not supported")
 
@@ -71,7 +98,7 @@ def read_coordinates_from_annotations(path=None, image_shape=None, settings=None
 
     return np.array(boxes), box_classes
 
-def export_yolo_annotation_from_csv(filename=None, output_dir=None):
+def export_yolo_annotation_from_csv(filename=None, output_dir=None) -> None:
     """ Export YOLO annotation from csv file. """
     csv_filename = f"df_{filename}.csv"
     dataframe = pd.read_csv(f"{csv_filename}")
@@ -83,7 +110,7 @@ def export_yolo_annotation_from_csv(filename=None, output_dir=None):
 def save_yolo_annotations_from_df(dataframe,
                                   filename=None,
                                   settings=None,
-                                  disable_progress_bar=True):
+                                  disable_progress_bar=True) -> None:
     """
     Save YOLO annotations from a dataframe containing the tile coordinates and the bounding boxes.
     """
@@ -98,12 +125,12 @@ def save_yolo_annotations_from_df(dataframe,
 
     group = dataframe.groupby(['tile_x1', 'tile_y1', 'tile_x2', 'tile_y2'])
     output_dir = settings.output_dir_annotations
-    file_name = f"tile_{filename}_{i[0]}_{i[1]}_{i[2]}_{i[3]}.txt"
 
     for i, sub in tqdm(group,
                        desc='Saving YOLO annotations',
                        disable=disable_progress_bar,
                        total=len(group.count())):
+        file_name = f"tile_{filename}_{i[0]}_{i[1]}_{i[2]}_{i[3]}.txt"
         with open(Path(output_dir) / file_name, mode="a+", encoding="utf-8") as file:
             for _, row in sub.iterrows():
                 file.write(f"{int(row['box_class'])} {row['yolo_x']} {row['yolo_y']} {row['yolo_w']} {row['yolo_h']}\n")
@@ -111,7 +138,7 @@ def save_yolo_annotations_from_df(dataframe,
 def save_to_pascal_voc_from_df(dataframe,
                                filename=None,
                                settings=None,
-                               disable_progress_bar=True):
+                               disable_progress_bar=True) -> None:
     """
     Saves a dataframe containing bounding box information in Pascal VOC format.
     """
@@ -172,7 +199,7 @@ def save_to_pascal_voc_from_df(dataframe,
                    short_empty_elements=False,
                    method="xml")
 
-def save_annotations(dataframe=None, filename=None, settings=None, disable_progress_bar=True):
+def save_annotations(dataframe=None, filename=None, settings=None, disable_progress_bar=True) -> None:
     """ Save the annotations in the format specified in the settings. """
     if settings.output_format_annotations == 'yolo':
         save_yolo_annotations_from_df(dataframe,
@@ -187,7 +214,12 @@ def save_annotations(dataframe=None, filename=None, settings=None, disable_progr
     else:
         raise ValueError("The output format of the annotations is not valid.")
 
-def convert_yolo_to_xyxy(yolo_x, yolo_y, yolo_w, yolo_h, image_width, image_height):
+def convert_yolo_to_xyxy(yolo_x,
+                         yolo_y,
+                         yolo_w,
+                         yolo_h,
+                         image_width,
+                         image_height):
     """ Convert YOLO format to XYXY format. """
     x_1 = int((yolo_x - yolo_w/2) * image_width)
     y_1 = int((yolo_y - yolo_h/2) * image_height)

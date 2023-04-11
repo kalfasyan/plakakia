@@ -6,7 +6,7 @@ from pathlib import Path
 import imagesize
 import psutil
 from tqdm import tqdm
-
+from utils_annotations import read_coco_coordinates_from_json
 
 # Create a dataclass for storing the settings
 @dataclass
@@ -35,7 +35,7 @@ class Settings():
     # Set the input directory for the annotations
     input_dir_annotations: str = 'input_annotations'
     # Set the input annotation file format
-    input_format_annotations: str = 'yolo' # 'yolo' or 'pascal_voc'
+    input_format_annotations: str = 'yolo' # 'yolo', 'pascal_voc', or 'coco'
     # Set the output directory for the images
     output_dir_images: str = 'output_images'
     # Set the output directory for the annotations
@@ -56,23 +56,31 @@ class Settings():
     num_workers: int = 1
     # Define a flag for removing duplicate tiles
     clear_duplicates: bool = False
+    # Define dictionary for annotations and extension formats
+    format_to_extension: dict = field(default_factory=dict)
 
     # Define the initialization method of this dataclass
     def __post_init__(self):
-        assert Path(self.input_dir_images).exists(), f"{self.input_dir_images} image input directory does not exist."
-        assert Path(self.input_dir_annotations).exists(), f"{self.input_dir_annotations} annotations directory does not exist."
+        self.format_to_extension = {
+            'yolo': 'txt',
+            'pascal_voc': 'xml',
+            'coco': 'json'
+        }
+        assert Path(self.input_dir_images).exists(), \
+            f"{self.input_dir_images} image input directory does not exist."
+        assert Path(self.input_dir_annotations).exists(), \
+            f"{self.input_dir_annotations} annotations directory does not exist."
         # Create the output directories for the images and annotations
         Path(self.output_dir_images).mkdir(parents=True, exist_ok=True)
         Path(self.output_dir_annotations).mkdir(parents=True, exist_ok=True)
         Path(self.log_folder).mkdir(parents=True, exist_ok=True)
 
         # Settings the annotations' file extension
-        self.input_extension_annotations = 'txt' \
-            if self.input_format_annotations == 'yolo' else 'xml'
+        self.input_extension_annotations = self.format_to_extension[self.input_format_annotations]
 
         # Settings the annotations' output file extension
-        self.output_extension_annotations = 'txt' \
-            if self.output_format_annotations == 'yolo' else 'xml'
+        self.output_extension_annotations = self.format_to_extension[self.output_format_annotations]\
+            if self.input_format_annotations != 'coco' else 'txt'
 
         # Get the list of images and annotations
         self.input_images = list(Path(self.input_dir_images).\
@@ -85,14 +93,29 @@ class Settings():
         # Check if there are any images with the given extension
         assert self.input_images, f"No images found with extension: {self.input_extension_images}."
         # Check if there are any annotations with the given extension
-        assert len(input_annotations), \
-            f"No annotations found with \'input' extension: {self.input_extension_annotations}."
-        # Check if the number of annotations is equal to the number of images
-        assert len(self.input_images) == len(input_annotations), \
-            "The number of images is not equal to the number of annotations."
-        # Sort the images and annotations
-        self.input_annotations.sort()
-        self.input_images.sort()
+        # Perform checks for 'yolo' and 'pascal_voc' formats
+        if self.input_format_annotations in ['yolo', 'pascal_voc']:
+            assert len(input_annotations), \
+                f"No annotations found with \'input' extension: {self.input_extension_annotations}."
+            # Check if the number of annotations is equal to the number of images
+            assert len(self.input_images) == len(input_annotations), \
+                "The number of images is not equal to the number of annotations."
+            # Sort the images and annotations
+            self.input_annotations.sort()
+            self.input_images.sort()
+        elif self.input_format_annotations == 'coco':
+            self.input_annotations = ['' for i in range(len(self.input_images))]
+            # Find the annotation json file in the input directory
+            try:
+                json_filepath = list(Path(self.input_dir_annotations).glob('*.json'))
+                assert len(json_filepath) == 1, \
+                    "More than one json files found in the input directory."
+                json_filepath = json_filepath[0].as_posix()
+            except AssertionError as err:
+                print(err)
+                exit()
+            print(f"Reading the annotations from {json_filepath}")
+            self.df_coco = read_coco_coordinates_from_json(json_filepath, self.input_dir_images)
 
         if self.validate_settings:
             # Calculate the minimum image dimension
@@ -102,12 +125,14 @@ class Settings():
                             total=len(self.input_images)):
                 width, height = imagesize.get(img)
                 minimum_image_dim = min(minimum_image_dim, width, height)
-                # Check if there is an annotation for each image
-                assert Path(img).stem in [Path(a).stem for a in self.input_annotations], \
-                    f"No annotation found for image {img}."
+                if self.input_format_annotations in ['yolo', 'pascal_voc']:
+                    # Check if there is an annotation for each image
+                    assert Path(img).stem in [Path(a).stem for a in self.input_annotations], \
+                        f"No annotation found for image {img}."
             # Check if the tile size is smaller than the smallest image dimension
             assert minimum_image_dim >= self.tile_size, \
-                f"The tile size is larger than the smallest image dimension: {minimum_image_dim}. Try setting a smaller tile size."
+                f"The tile size is larger than the smallest image dimension: {minimum_image_dim}. \n\
+                    Try setting a smaller tile size."
 
         # Create the inverse mapping for the annotation labels
         self.inv_annotation_mapping = {v: k for k, v in self.annotation_mapping.items()}

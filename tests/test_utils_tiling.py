@@ -199,10 +199,7 @@ def test_tile_image():
     tile_size = 128
     step_size = 64
 
-    settings.tile_size = tile_size
-    settings.step_size = step_size
-
-    tiles, coordinates = tile_image(image, settings)
+    tiles, coordinates = tile_image(image, tile_size=tile_size, step_size=step_size)
 
     # Check that the output shape and type is correct
     assert tiles.shape == (49, 128, 128, 3)
@@ -231,4 +228,4 @@ def test_tile_image_invalid_image():
     """
     image = np.random.randint(0, 256, size=(512, 512), dtype=np.uint8)
     with pytest.raises(IndexError):
-        tile_image(image, settings)
+        tile_image(image, tile_size=settings.tile_size, step_size=settings.step_size)

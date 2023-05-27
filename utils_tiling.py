@@ -30,12 +30,8 @@ def add_border(image, settings, color=[0, 0, 0]):
 
     return border
 
-def tile_image(image, settings):
+def tile_image(image, tile_size=250, step_size=50):
     """ Tile an image into overlapping tiles. """
-
-    # Read the tile size and step size from the settings
-    tile_size=settings.tile_size
-    step_size=settings.step_size
 
     # Compute the number of rows and columns of tiles
     rows = (image.shape[0] - tile_size) // step_size + 1
@@ -244,7 +240,8 @@ def process_tile(t, input_image, input_annotation, settings=None):
                                                                     settings=settings)
     # Split the image into tiles and get the coordinates of the tiles
     tiles, coordinates = tile_image(image.copy(),
-                                    settings=settings)
+                                    tile_size=settings.tile_size,
+                                    step_size=settings.step_size)
 
     # Get the bounding boxes inside the tiles
     if bounding_boxes.shape[0] > 0:

@@ -9,25 +9,29 @@ The reason for making this tool is to handle image tiling that takes into accoun
   
 In this package, I employ `multiprocessing` and `numpy` extensively to make this as fast as possible so that one can use it with thousands of images. For benchmarks on some public datasets, see below.  
 
-# Requirements
-There is a `requirements.txt` file which you can use to create a virtual environment. It is **highly** recommended that you do that before using this repository.  
+# Installation
+
+It is **highly** recommended that you do that before using this repository.  
 Here are some recommended steps to follow:  
  1. Download and install [Mamba](https://mamba.readthedocs.io/en/latest/installation.html) (or [Anaconda](https://www.anaconda.com/products/distribution)). 
  2. Create a virtual environment:  
  `mamba create -n plakakia jupyterlab nb_conda_kernels ipykernel ipywidgets pip -y`  
  3. Activate the environment:  
  `mamba activate plakakia`
- 4. Install all requirements:  
- `pip install -r requirements.txt`
+4. Run the following command to install the library:  
+`pip install git+https://github.com/kalfasyan/plakakia.git`  
+[**OR** Clone the repository --> `cd plakakia/` --> `pip install .` This will use the setup.py file in the current directory to install the plakakia library along with its dependencies].
 
 # Usage
-
- - The `config.yaml` file is used to define your input/output paths for where you placed your images and annodations and where you want them to be exported.
- - Place all your data in the input folder split into 'images' and 'annotations'.
- - Run `python make_some_tiles.py`
-
- **NOTE**: For now, only YOLO (`yolo`) and PascalVOC (`pascal_voc`) formats are allowed in the settings. 
-
+ 1. Make sure you have the plakakia library installed in your Python environment. You can refer to the installation instructions mentioned earlier.
+ 2. Open a terminal or command prompt.
+ 3. Activate your Python environment.
+ 4. Run the following command to execute the make_some_tiles script:  
+ `make_some_tiles --config path/to/config.yaml`  
+ Replace *path/to/config.yaml* with the actual path to your configuration file. This file specifies the settings and parameters for the tiling process. Check this repository for an example `config.yaml`  
+ - The script will read the configuration from the provided YAML file and generate tiles accordingly. The output tiles will be saved to the specified output directory, as specified in the configuration.
+ 
+# Future
 **TODO:**  
  ☑️ ~~Fix reading of classes from annotations (create a 'mapper' dictionary to map classes to numerical values).~~  
  ☑️ ~~Read settings from a file (e.g. json).~~  
@@ -39,7 +43,7 @@ Here are some recommended steps to follow:
  ⬜️ Make tiles with multidimensional data (e.g. hdf5 hyperspectral images).  
  ⬜️ Provide tiling functionality without any labels needed.  
 
-## Benchmarks
+# Benchmarks
 
 **Benchmarked on**: AMD Ryzen 5 PRO 6650U; 6 cores; 12 threads; 2.9 GHz
 

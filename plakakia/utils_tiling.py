@@ -8,7 +8,7 @@ import numpy as np
 import pandas as pd
 from tqdm import tqdm
 
-from utils_annotations import (convert_yolo_to_xyxy,
+from .utils_annotations import (convert_yolo_to_xyxy,
                                read_coordinates_from_annotations,
                                save_annotations)
 

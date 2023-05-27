@@ -148,6 +148,14 @@ def save_boxes(tiles=np.array([]),
             new_x2 = box[2] - tile_coord[0]
             new_y2 = box[3] - tile_coord[1]
 
+            if settings.draw_boxes:
+                cv2.rectangle(tile, (new_x1, new_y1), (new_x2, new_y2), (0, 255, 255), 2)
+                # Add the class on top of the rectangle
+                cv2.putText(tile,
+                            str(box_classes[b]),
+                            (new_x1, new_y1),
+                            cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 255), 2)
+
             # Stack the class+coordinates of the boxes w/ results array and tile coordinates
             results = np.vstack((results,
                                  [tile_coord[0], tile_coord[1], tile_coord[2], tile_coord[3],

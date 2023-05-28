@@ -18,9 +18,7 @@ It is **highly** recommended that you create a new virtual environment for the i
  3. Activate the environment:  
  `mamba activate plakakia`
 4. Run the following command to install the library:  
-`pip install git+https://github.com/kalfasyan/plakakia.git`  
-**OR** Clone the repository --> `cd plakakia/` --> `pip install .` (don't omit the dot)  
-This will use the setup.py file in the current directory to install the plakakia library along with its dependencies.
+`pip install plakakia`  
 
 # Usage
 

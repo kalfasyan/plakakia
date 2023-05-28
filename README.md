@@ -77,7 +77,7 @@ Some coordinates in x1,y1,x2,y2 format:
 
 # Benchmarks
 
-**Benchmarked on**: AMD Ryzen 5 PRO 6650U; 6 cores; 12 threads; 2.9 GHz
+**Benchmarked on HP Laptop with specs**: AMD Ryzen 5 PRO 6650U; 6 cores; 12 threads; 2.9 GHz
 
 | Dataset | Source | Formats (images/labels) | Number of images | tile_size | step_size | tiles generated | plakakia performance |
 | ------------- | ------------- | ------------- | ------------- | ------------- | ------------- | ------------- | ------------- |

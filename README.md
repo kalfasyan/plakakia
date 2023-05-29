@@ -1,14 +1,26 @@
-# plakakia
+# plakakia 
+### /πλακάκια  
 *Python image tiling library for image processing, object detection, etc.*
 
 **DISCLAIMER**: This is a work in progress.  
   
 ![Alt text](logo/logo.png?raw=true "This is a \"plakaki\", meaning tile in Greek.")  
 
-The reason for making this tool is to handle image tiling that takes into account bounding boxes that exist inside the image. For now, I've only considered rectangular tiles. An image is divided into tiles based on a given `tile_size` and `step_size`. Overlapping tiles are handled fine, too. Bounding boxes belong to a tile only if they are *fully* inside it, but I'm planning to support partial overlap as well. Note that such methods create duplicate bounding boxes (i.e. a bounding box can appear in more than one tiles). There is an option for avoiding duplicates. Note that depending on the selection of `tile_size` and `step_size`, there is a potential cost of missing some bounding boxes altogether sincce the duplicate deletion method is strictly applied. Might consider adding more flexible methods in the future.  
-  
-In this package, I employ `multiprocessing` and `numpy` extensively to make this as fast as possible so that one can use it with thousands of images. For benchmarks on some public datasets, see below.  
+## What is this?
+**`plakakia`** was initially developed to address the need for efficient image tiling while considering bounding boxes within the image. It offers a solution for dividing an image into rectangular tiles based on specified tile_size and step_size parameters. Overlapping tiles are handled seamlessly. Currently, the tool assigns bounding boxes to tiles only if they are fully contained within them. However, future updates will include support for partial overlap.
 
+It is worth noting that the tool may generate duplicate bounding boxes as a result of tiling. To mitigate this, `plakakia` offers an option to eliminate duplicates. However, it is important to be aware that, depending on the chosen `tile_size` and `step_size`, there is a potential risk of missing some bounding boxes entirely due to the strict duplicate deletion method. To address this limitation, I am considering the implementation of more flexible methods in the future.  
+
+## What is it going to be?
+Currently, `plakakia` primarily focuses on RGB images in object detection tasks, where the goal is to have tiles that encompass the corresponding bounding boxes. However, I have plans to expand its capabilities to support segmentation tasks as well. This entails tiling both the input images and the associated masks, where each pixel represents a specific category.
+
+In addition, I aim to enhance the tool by providing support for images with more than 3 channels, such as multispectral images. It is important to **note** that `plakakia` already allows online generation of tiles for images with any number of channels (see [examples](examples/) folder). However, offline batch processing is not currently supported.  
+
+So, `plakakia` will hopefully become a versatile tool for tiling images in a variety of tasks using a variety of image formats with the ultimate goal of fast and efficient processing.
+
+## Performance
+To ensure optimal performance, `plakakia` extensively utilizes the `multiprocessing` and `numpy` libraries. This enables efficient processing of thousands of images without the use of nested for-loops which is often applied in tiling tasks. For detailed benchmarks on various public datasets, please refer to the information provided below.
+  
 # Installation
 
 It is **highly** recommended that you create a new virtual environment for the installation:    
@@ -38,7 +50,7 @@ This scenario covers the case in which you already have a folder with images and
  Check the output directory you specified in the yaml file for results.  
   
 ## B. Online tile generation
-In this scenario you want to apply tiling on images that you have loaded in memory (e.g. during model inference).  
+In this scenario you want to apply tiling on images - *with any number of channels* - that you have loaded in memory (e.g. during model inference).  
 ```
 from plakakia.utils_tiling import tile_image
 import cv2
@@ -73,8 +85,10 @@ Some coordinates in x1,y1,x2,y2 format:
  [100   0 200 100]  
  [200   0 300 100]]
 ![Alt text](logo/tiles.png?raw=true "The result of the tiling process.")  
+  
 
-
+> ⚠️ For more examples, check the [examples](examples/) folder.   
+    
 # Benchmarks
 
 **Benchmarked on HP Laptop with specs**: AMD Ryzen 5 PRO 6650U; 6 cores; 12 threads; 2.9 GHz
@@ -96,5 +110,8 @@ Some coordinates in x1,y1,x2,y2 format:
  ⬜️ Add less strict (flexible) duplicate removal methods to avoid missing bounding boxes.  
  ⬜️ Consider bounding boxes in tiles if they *partially* belong to one.  
  ⬜️ Support reading annotations from a dataframe/csv file.  
- ⬜️ Make tiles with multidimensional data (e.g. hdf5 hyperspectral images).  
+ ⬜️ Make tiles with multidimensional data offline with config file (e.g. hdf5 hyperspectral images).  
+ ⬜️ Add support for segmentation tasks (tile both input images and masks).  
   
+# Want to contribute?
+If you want to contribute to this project, please check the [CONTRIBUTING.md](CONTRIBUTING.md) file.

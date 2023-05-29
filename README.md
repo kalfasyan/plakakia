@@ -3,6 +3,7 @@
 *Python image tiling library for image processing, object detection, etc.*
 
 **DISCLAIMER**: This is a work in progress.  
+⚠️ When executed, the `make_some_tiles` script removes the following folders from the current location: ['tiles/', 'output/', 'annotations/', 'images/', 'logs/']
   
 ![Alt text](logo/logo.png?raw=true "This is a \"plakaki\", meaning tile in Greek.")  
 

@@ -3,7 +3,6 @@
 *Python image tiling library for image processing, object detection, etc.*
 
 **DISCLAIMER**: This is a work in progress.  
-⚠️ When executed, the `make_some_tiles` script removes the following folders from the current location: ['tiles/', 'output/', 'annotations/', 'images/', 'logs/']
   
 ![Alt text](logo/logo.png?raw=true "This is a \"plakaki\", meaning tile in Greek.")  
 
@@ -42,7 +41,7 @@ This scenario covers the case in which you already have a folder with images and
  - Open a terminal or command prompt and activate your Python environment (e.g. `mamba activate plakakia`).
  - Run the following command to execute the make_some_tiles script:  
   > `make_some_tiles --config path/to/config.yaml`  
-
+  ⚠️ When executed, the `make_some_tiles` script removes the following folders from the current location: ['tiles/', 'output/', 'annotations/', 'images/', 'logs/']
 -    Replace *path/to/config.yaml* with the actual path to your configuration file. This file specifies the settings and parameters for the tiling process. Check an example [`config.yaml`](plakakia/config.yaml).  
  - The script will read your `config.yaml` and generate tiles accordingly.  
 

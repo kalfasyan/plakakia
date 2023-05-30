@@ -65,7 +65,7 @@ def read_coco_coordinates_from_json(filename, dir_images) -> pd.DataFrame:
         data = json.load(f)
 
     df_anns = pd.DataFrame(data['annotations'])
-    df_imgs = pd.DataFrame(data['images'])
+    df_ims = pd.DataFrame(data['images'])
     boxes = []
     for annotation in data['annotations']:
         x, y, w, h = annotation['bbox']
@@ -73,13 +73,13 @@ def read_coco_coordinates_from_json(filename, dir_images) -> pd.DataFrame:
         x_2, y_2 = int(x+w), int(y+h)
         boxes.append([x_1, y_1, x_2, y_2])
 
-    df_merged = pd.merge(df_anns, df_imgs, left_on='image_id', right_on='id')
+    df_merged = pd.merge(df_anns, df_ims, left_on='image_id', right_on='id')
     df_merged['boxes'] = boxes
     df_merged['file_name'] = df_merged['file_name'].apply(lambda x: (Path(dir_images) / x).as_posix())
 
     return df_merged
 
-def read_coordinates_from_annotations(img_path=None, 
+def read_coordinates_from_annotations(im_path=None, 
                                       ant_path=None,
                                       image_shape=None, 
                                       settings=None) -> tuple:
@@ -89,8 +89,8 @@ def read_coordinates_from_annotations(img_path=None,
     elif settings.input_format_annotations == 'pascal_voc':
         boxes, classes = read_pascalvoc_coordinates_from_xml(ant_path, settings)
     elif settings.input_format_annotations == 'coco':
-        boxes = settings.df_coco.query("file_name == @img_path").boxes.tolist()
-        classes = settings.df_coco.query("file_name == @img_path").category_id.tolist()
+        boxes = settings.df_coco.query("file_name == @im_path").boxes.tolist()
+        classes = settings.df_coco.query("file_name == @im_path").category_id.tolist()
     else:
         raise ValueError(f"Annotation format {settings.input_format_annotations} not supported")
 

@@ -5,6 +5,7 @@ import numpy as np
 from tqdm import tqdm
 from pathlib import Path
 import json
+import cv2
 
 def read_pascalvoc_coordinates_from_xml(filename=str, settings=None):
     ''' Read coordinates from PascalVOC xml file. '''
@@ -226,3 +227,24 @@ def convert_yolo_to_xyxy(yolo_x,
     x_2 = int((yolo_x + yolo_w/2) * image_width)
     y_2 = int((yolo_y + yolo_h/2) * image_height)
     return x_1, y_1, x_2, y_2
+
+def save_image_tiles(filename=None, tiles=None, coordinates=None, settings=None, prefix=None):
+    """ Save the mask tiles. """
+
+    if prefix == 'mask':
+        output_dir = settings.output_dir_annotations
+        extension = settings.output_extension_images
+    elif prefix in ['tile', 'image']:
+        output_dir = settings.output_dir_images
+        extension = settings.output_extension_images
+    else:
+        raise ValueError(f"The prefix is not valid. The only accepted values are 'mask', 'tile' and 'image'.")
+
+    for i, (tile, tile_coord) in tqdm(enumerate(zip(tiles, coordinates)),
+                                       desc="Saving mask tiles",
+                                       total=len(tiles)):
+        # Save the tile
+        file_path = f"{prefix}_{filename}_{tile_coord[0]}_{tile_coord[1]}_{tile_coord[2]}_{tile_coord[3]}.{extension}"
+        save_path = Path(output_dir) / Path(file_path)
+
+        cv2.imwrite(save_path.as_posix(), tile)

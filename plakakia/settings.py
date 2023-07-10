@@ -64,7 +64,8 @@ class Settings():
         self.format_to_extension = {
             'yolo': 'txt',
             'pascal_voc': 'xml',
-            'coco': 'json'
+            'coco': 'json',
+            'segmentation': 'png',
         }
         assert Path(self.input_dir_images).exists(), \
             f"{self.input_dir_images} image input directory does not exist."

@@ -201,7 +201,7 @@ def plot_example_tile_with_yolo_annotation(settings=None):
     plt.imshow(tile_rgb)
     plt.show()
 
-def process_tile(t, input_im, input_annotation, settings=None):
+def process_tiles(t, input_im, input_annotation, settings=None):
     """ The main function to process a tile. """
     # Get the file name
     file_name = Path(input_im).stem
@@ -213,13 +213,28 @@ def process_tile(t, input_im, input_annotation, settings=None):
     tiles, coordinates = tile_image(im.copy(), tile_size=settings.tile_size, step_size=settings.step_size)
 
     if settings.input_format_annotations == "segmentation":
-        raise NotImplementedError("Segmentation annotations are not supported yet.")
+        # raise NotImplementedError("Segmentation annotations are not supported yet.")
         settings.output_format_annotations = "segmentation"
         # assert spatial dimensions of image and mask are the same
-        mask = read_input_mask(mask_fname=file_name, settings=settings)
+        mask = read_input_mask(im_fname=file_name, settings=settings)
         assert (im.shape[0]==mask.shape[0]) and (im.shape[1]==mask.shape[1]), "spatial dimensions of image and mask are not the same"
         # Split the mask into tiles
         mask_tiles, mask_coordinates = tile_image(mask.copy(), tile_size=settings.tile_size, step_size=settings.step_size)
+        print(f"mask_tiles.shape: {mask_tiles.shape}")
+        # Save the mask tiles in the output directory for masks
+        save_image_tiles(filename=file_name,
+                        tiles=mask_tiles,
+                        coordinates=mask_coordinates,
+                        settings=settings,
+                        prefix="mask")
+
+        # Save the image tiles in the output directory for images
+        save_image_tiles(filename=file_name,
+                         tiles=tiles,
+                         coordinates=coordinates,
+                         settings=settings,
+                         prefix="tile")        
+        return t
 
     else:
         # Read the coordinates of the bounding boxes from the annotation files

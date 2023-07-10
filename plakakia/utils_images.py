@@ -6,6 +6,8 @@ def read_input_image(im_fname=None, settings=None):
 
     if extension in ['jpg', 'png']:
         image_filename = str(Path(settings.input_dir_images).joinpath(f"{im_fname}.{extension}"))
+        print(image_filename)
+
         image = cv2.imread(image_filename)
         # Pad the image if needed
         if settings.pad_image:
@@ -16,16 +18,17 @@ def read_input_image(im_fname=None, settings=None):
     return image
 
 def read_input_mask(im_fname=None, settings=None):
-    extension = settings.input_extension_masks
+    extension = settings.format_to_extension['segmentation']
 
-    if extension in ['jpg', 'png']:
-        mask_filename = str(Path(settings.input_dir_masks).joinpath(f"{im_fname}.{extension}"))
+    if extension in ['png']:
+        mask_filename = str(Path(settings.input_dir_annotations).joinpath(f"{im_fname}.{extension}"))
+
         mask = cv2.imread(mask_filename)
         # Pad the mask if needed
         if settings.pad_image:
             mask = add_border(mask, settings=settings, color=[0, 0, 0])
     else:
-        raise NotImplementedError(f"Extension {extension} not implemented.")
+        raise NotImplementedError(f"Extension {extension} not implemented for reading masks.")
 
     return mask
 
@@ -44,4 +47,3 @@ def add_border(image, settings, color=[0, 0, 0]):
     border = cv2.copyMakeBorder(image, top, bottom, left, right, cv2.BORDER_CONSTANT, value=color)
 
     return border
-

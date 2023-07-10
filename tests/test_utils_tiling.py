@@ -16,14 +16,14 @@ import pytest
 import yaml
 from lxml import etree as ET
 
-from settings import Settings
-from utils_annotations import (read_coco_coordinates_from_json,
+from plakakia.settings import Settings
+from plakakia.utils_annotations import (read_coco_coordinates_from_json,
                                read_pascalvoc_coordinates_from_xml,
                                read_yolo_coordinates_from_txt)
-from utils_tiling import add_border, tile_image
+from plakakia.utils_tiling import add_border, tile_image
 
 # Read the settings from the config.yaml file
-with open('config.yaml', 'r') as f:
+with open('plakakia/config.yaml', 'r') as f:
     config = yaml.load(f, Loader=yaml.FullLoader)
 
 # Create a settings object

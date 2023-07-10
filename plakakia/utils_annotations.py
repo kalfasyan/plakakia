@@ -5,6 +5,7 @@ import numpy as np
 from tqdm import tqdm
 from pathlib import Path
 import json
+import cv2
 
 def read_pascalvoc_coordinates_from_xml(filename=str, settings=None):
     ''' Read coordinates from PascalVOC xml file. '''
@@ -65,7 +66,7 @@ def read_coco_coordinates_from_json(filename, dir_images) -> pd.DataFrame:
         data = json.load(f)
 
     df_anns = pd.DataFrame(data['annotations'])
-    df_imgs = pd.DataFrame(data['images'])
+    df_ims = pd.DataFrame(data['images'])
     boxes = []
     for annotation in data['annotations']:
         x, y, w, h = annotation['bbox']
@@ -73,13 +74,13 @@ def read_coco_coordinates_from_json(filename, dir_images) -> pd.DataFrame:
         x_2, y_2 = int(x+w), int(y+h)
         boxes.append([x_1, y_1, x_2, y_2])
 
-    df_merged = pd.merge(df_anns, df_imgs, left_on='image_id', right_on='id')
+    df_merged = pd.merge(df_anns, df_ims, left_on='image_id', right_on='id')
     df_merged['boxes'] = boxes
     df_merged['file_name'] = df_merged['file_name'].apply(lambda x: (Path(dir_images) / x).as_posix())
 
     return df_merged
 
-def read_coordinates_from_annotations(img_path=None, 
+def read_coordinates_from_annotations(im_path=None, 
                                       ant_path=None,
                                       image_shape=None, 
                                       settings=None) -> tuple:
@@ -89,8 +90,8 @@ def read_coordinates_from_annotations(img_path=None,
     elif settings.input_format_annotations == 'pascal_voc':
         boxes, classes = read_pascalvoc_coordinates_from_xml(ant_path, settings)
     elif settings.input_format_annotations == 'coco':
-        boxes = settings.df_coco.query("file_name == @img_path").boxes.tolist()
-        classes = settings.df_coco.query("file_name == @img_path").category_id.tolist()
+        boxes = settings.df_coco.query("file_name == @im_path").boxes.tolist()
+        classes = settings.df_coco.query("file_name == @im_path").category_id.tolist()
     else:
         raise ValueError(f"Annotation format {settings.input_format_annotations} not supported")
 
@@ -226,3 +227,24 @@ def convert_yolo_to_xyxy(yolo_x,
     x_2 = int((yolo_x + yolo_w/2) * image_width)
     y_2 = int((yolo_y + yolo_h/2) * image_height)
     return x_1, y_1, x_2, y_2
+
+def save_image_tiles(filename=None, tiles=None, coordinates=None, settings=None, prefix=None):
+    """ Save the mask tiles. """
+
+    if prefix == 'mask':
+        output_dir = settings.output_dir_annotations
+        extension = settings.output_extension_images
+    elif prefix in ['tile', 'image']:
+        output_dir = settings.output_dir_images
+        extension = settings.output_extension_images
+    else:
+        raise ValueError(f"The prefix is not valid. The only accepted values are 'mask', 'tile' and 'image'.")
+
+    for i, (tile, tile_coord) in tqdm(enumerate(zip(tiles, coordinates)),
+                                       desc="Saving mask tiles",
+                                       total=len(tiles)):
+        # Save the tile
+        file_path = f"{prefix}_{filename}_{tile_coord[0]}_{tile_coord[1]}_{tile_coord[2]}_{tile_coord[3]}.{extension}"
+        save_path = Path(output_dir) / Path(file_path)
+
+        cv2.imwrite(save_path.as_posix(), tile)

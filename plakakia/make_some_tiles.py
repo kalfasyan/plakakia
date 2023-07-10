@@ -15,15 +15,15 @@ import yaml
 from tqdm import tqdm
 
 from .settings import Settings
-from .utils_tiling import clear_duplicates, process_tile
+from .utils_tiling import clear_duplicates, process_tiles
 
 random.seed(3)
 
 
-def process_tile_wrapper(args):
+def process_tiles_wrapper(args):
     """Wrapper function for the process_tile function."""
     t, input_image, input_annotation, settings = args
-    return process_tile(t, input_image, input_annotation, settings)
+    return process_tiles(t, input_image, input_annotation, settings)
 
 
 def main(config_path=None):
@@ -54,7 +54,7 @@ def main(config_path=None):
                 enumerate(zip(settings.input_images, settings.input_annotations))]
 
         # Submit the tasks to the pool
-        results = pool.map(process_tile_wrapper, args)
+        results = pool.map(process_tiles_wrapper, args)
 
     end_time = perf_counter() - start_time
 

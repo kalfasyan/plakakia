@@ -8,27 +8,10 @@ import numpy as np
 import pandas as pd
 from tqdm import tqdm
 
-from .utils_annotations import (convert_yolo_to_xyxy,
-                               read_coordinates_from_annotations,
-                               save_annotations)
+from .utils_annotations import *
+from .utils_images import *
 
 logger = logging.getLogger(__name__)
-
-def add_border(image, settings, color=[0, 0, 0]):
-    """ Add border to an image. """
-
-    top=settings.pad_size
-    bottom=settings.pad_size
-    left=settings.pad_size
-    right=settings.pad_size
-
-    if isinstance(image, str):
-        image = cv2.imread(image)
-
-    # Create border
-    border = cv2.copyMakeBorder(image, top, bottom, left, right, cv2.BORDER_CONSTANT, value=color)
-
-    return border
 
 def tile_image(image, tile_size=250, step_size=50):
     """ Tile an image into overlapping tiles. """
@@ -60,7 +43,7 @@ def tile_image(image, tile_size=250, step_size=50):
 
     return tiles, coordinates
 
-def get_boxes_inside_tiles(bounding_boxes,
+def get_boxes_inside_tiles(bboxes,
                            tile_coordinates,
                            settings):
     """ Get the bounding boxes that are inside the tiles. """
@@ -73,30 +56,30 @@ def get_boxes_inside_tiles(bounding_boxes,
     for i, tile_coord in enumerate(tile_coordinates):
         if partial_boxes:
             # Create a boolean mask indicating which boxes partially overlap with the tile
-            mask = is_partial_square_inside_array(bounding_boxes,
+            mask = is_partial_square_inside_array(bboxes,
                                                   tile_coord,
                                                   overlap_threshold=overlap_threshold)
         else:
             # Create a boolean mask indicating which boxes are completely inside the tile
-            mask = is_square_inside_array(bounding_boxes, tile_coord)
+            mask = is_square_inside_array(bboxes, tile_coord)
 
         # Add the boxes that satisfy the condition to the corresponding tile
-        boxes_inside_tiles[i] = bounding_boxes[mask].tolist()
+        boxes_inside_tiles[i] = bboxes[mask].tolist()
 
     return boxes_inside_tiles
 
-def is_partial_square_inside_array(bounding_boxes, tile_coord, overlap_threshold=None):
+def is_partial_square_inside_array(bboxes, tile_coord, overlap_threshold=None):
     """ Check if a square is partially inside an array. """
     # Compute the coordinates of the intersection between the box and the tile
-    x_1 = np.maximum(bounding_boxes[:, 0], tile_coord[0])
-    y_1 = np.maximum(bounding_boxes[:, 1], tile_coord[1])
-    x_2 = np.minimum(bounding_boxes[:, 2], tile_coord[2])
-    y_2 = np.minimum(bounding_boxes[:, 3], tile_coord[3])
+    x_1 = np.maximum(bboxes[:, 0], tile_coord[0])
+    y_1 = np.maximum(bboxes[:, 1], tile_coord[1])
+    x_2 = np.minimum(bboxes[:, 2], tile_coord[2])
+    y_2 = np.minimum(bboxes[:, 3], tile_coord[3])
 
     # Compute the areas of the intersection and the box
     intersection_area = (x_2 - x_1) * (y_2 - y_1)
-    box_area = (bounding_boxes[:, 2] - bounding_boxes[:, 0]) * \
-        (bounding_boxes[:, 3] - bounding_boxes[:, 1])
+    box_area = (bboxes[:, 2] - bboxes[:, 0]) * \
+        (bboxes[:, 3] - bboxes[:, 1])
 
     # Compute the overlap between the box and the tile
     overlap = intersection_area / box_area
@@ -104,14 +87,14 @@ def is_partial_square_inside_array(bounding_boxes, tile_coord, overlap_threshold
     # Return a boolean mask indicating which boxes have overlap above the threshold
     return overlap > overlap_threshold
 
-def is_square_inside_array(bounding_boxes, tile_coord):
+def is_square_inside_array(bboxes, tile_coord):
     """ Check if a square is completely inside an array. """
     # Return a boolean mask indicating which boxes are inside the tile
     return np.logical_and.reduce((
-        bounding_boxes[:, 0] >= tile_coord[0],
-        bounding_boxes[:, 1] >= tile_coord[1],
-        bounding_boxes[:, 2] <= tile_coord[2],
-        bounding_boxes[:, 3] <= tile_coord[3]
+        bboxes[:, 0] >= tile_coord[0],
+        bboxes[:, 1] >= tile_coord[1],
+        bboxes[:, 2] <= tile_coord[2],
+        bboxes[:, 3] <= tile_coord[3]
     ))
 
 def save_boxes(tiles=np.array([]),
@@ -188,13 +171,13 @@ def plot_example_tile_with_yolo_annotation(settings=None):
     tile_imagepaths = list(Path(settings.output_dir_images).glob('*.{settings.output_extension_images}'))
 
     # Randomly select a tile from tile_imagepaths list
-    img_selection  = random.choice(tile_imagepaths)
-    logger.info(img_selection)
-    assert Path(img_selection).exists(), "does not exist"
-    tile = cv2.imread(str(img_selection))
+    im_selection  = random.choice(tile_imagepaths)
+    logger.info(im_selection)
+    assert Path(im_selection).exists(), "does not exist"
+    tile = cv2.imread(str(im_selection))
 
     # Read the corresponding annotation file
-    annotation_selection = Path(settings.output_dir_annotations) / f"{img_selection.stem}.txt"
+    annotation_selection = Path(settings.output_dir_annotations) / f"{im_selection.stem}.txt"
     logger.info(annotation_selection)
     assert Path(annotation_selection).exists(), "does not exist"
     with open(annotation_selection, mode='r', encoding="utf-8") as file:
@@ -218,53 +201,70 @@ def plot_example_tile_with_yolo_annotation(settings=None):
     plt.imshow(tile_rgb)
     plt.show()
 
-def process_tile(t, input_image, input_annotation, settings=None):
+def process_tiles(t, input_im, input_annotation, settings=None):
     """ The main function to process a tile. """
     # Get the file name
-    file_name = Path(input_image).stem
+    file_name = Path(input_im).stem
 
     # Read the image
-    extension = settings.input_extension_images
-    image_filename = str(Path(settings.input_dir_images).joinpath(f"{file_name}.{extension}"))
-    image = cv2.imread(image_filename)
+    im = read_input_image(im_fname=file_name, settings=settings)
 
-    # Pad the image if needed
-    if settings.pad_image:
-        image = add_border(image, settings=settings, color=[0, 0, 0])
-    image_shape = image.shape
-
-    # Read the coordinates of the bounding boxes from the annotation files
-    bounding_boxes, box_classes = read_coordinates_from_annotations(img_path=input_image,
-                                                                    ant_path=input_annotation,
-                                                                    image_shape=image_shape,
-                                                                    settings=settings)
     # Split the image into tiles and get the coordinates of the tiles
-    tiles, coordinates = tile_image(image.copy(),
-                                    tile_size=settings.tile_size,
-                                    step_size=settings.step_size)
+    tiles, coordinates = tile_image(im.copy(), tile_size=settings.tile_size, step_size=settings.step_size)
 
-    # Get the bounding boxes inside the tiles
-    if bounding_boxes.shape[0] > 0:
-        boxes_in_tiles = get_boxes_inside_tiles(bounding_boxes=bounding_boxes,
-                                                tile_coordinates=coordinates,
-                                                settings=settings)
-    else:
+    if settings.input_format_annotations == "segmentation":
+        # raise NotImplementedError("Segmentation annotations are not supported yet.")
+        settings.output_format_annotations = "segmentation"
+        # assert spatial dimensions of image and mask are the same
+        mask = read_input_mask(im_fname=file_name, settings=settings)
+        assert (im.shape[0]==mask.shape[0]) and (im.shape[1]==mask.shape[1]), "spatial dimensions of image and mask are not the same"
+        # Split the mask into tiles
+        mask_tiles, mask_coordinates = tile_image(mask.copy(), tile_size=settings.tile_size, step_size=settings.step_size)
+        print(f"mask_tiles.shape: {mask_tiles.shape}")
+        # Save the mask tiles in the output directory for masks
+        save_image_tiles(filename=file_name,
+                        tiles=mask_tiles,
+                        coordinates=mask_coordinates,
+                        settings=settings,
+                        prefix="mask")
+
+        # Save the image tiles in the output directory for images
+        save_image_tiles(filename=file_name,
+                         tiles=tiles,
+                         coordinates=coordinates,
+                         settings=settings,
+                         prefix="tile")        
         return t
 
-    # Generate the tiles with the bounding boxes
-    df_results = save_boxes(filename=file_name,
-                            tiles=tiles,
-                            coordinates=coordinates,
-                            boxes_in_tiles=boxes_in_tiles,
-                            box_classes=box_classes,
-                            settings=settings)
+    else:
+        # Read the coordinates of the bounding boxes from the annotation files
+        bboxes, box_classes = read_coordinates_from_annotations(im_path=input_im, 
+                                                                ant_path=input_annotation, 
+                                                                image_shape=im.shape, 
+                                                                settings=settings)
 
-    # Save the annotations in Pascal VOC format or YOLO format
-    save_annotations(df_results,
-                     filename=file_name,
-                     settings=settings,
-                     disable_progress_bar=True)
-    return t
+        # Get the bounding boxes inside the tiles
+        if bboxes.shape[0] > 0:
+            boxes_in_tiles = get_boxes_inside_tiles(bboxes=bboxes,
+                                                    tile_coordinates=coordinates,
+                                                    settings=settings)
+        else:
+            return t
+
+        # Generate the tiles with the bounding boxes
+        df_results = save_boxes(filename=file_name,
+                                tiles=tiles,
+                                coordinates=coordinates,
+                                boxes_in_tiles=boxes_in_tiles,
+                                box_classes=box_classes,
+                                settings=settings)
+
+        # Save the annotations in Pascal VOC format or YOLO format
+        save_annotations(df_results,
+                        filename=file_name,
+                        settings=settings,
+                        disable_progress_bar=True)
+        return t
 
 def clear_duplicates(settings):
     """ Clear the duplicate tiles. """

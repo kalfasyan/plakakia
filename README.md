@@ -40,7 +40,7 @@ It is **highly** recommended that you create a new virtual environment for the i
 # Usage
 
 In this section we cover two main use cases for this library.
-## A. Offline tile generation with a config file
+### A. Offline tile generation with a config file
 This scenario covers the case in which you already have a folder with images and annotations.  
   
 `make_some_tiles --config path/to/config.yaml`  
@@ -48,7 +48,7 @@ This scenario covers the case in which you already have a folder with images and
 -    Check an example [`config.yaml`](plakakia/config.yaml).  
   
   
-## B. Online tile generation
+### B. Online tile generation
 In this scenario you want to apply tiling on images - *with any number of channels* - that you have loaded in memory (e.g. during model inference).  
 ```
 from plakakia.utils_tiling import tile_image

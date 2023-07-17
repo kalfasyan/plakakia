@@ -6,25 +6,22 @@
 # plakakia 
 ### /πλακάκια  
 *Python image tiling library for image processing, object detection, etc.*
-
-**DISCLAIMER**: This is a work in progress.  
-  
+    
 ![Alt text](logo/logo.png?raw=true "This is a \"plakaki\", meaning tile in Greek.")  
 
-## What is this?
-**`plakakia`** was initially developed to address the need for efficient image tiling while considering bounding boxes within the image. It offers a solution for dividing an image into rectangular tiles based on specified tile_size and step_size parameters. Overlapping tiles are handled seamlessly. Currently, the tool assigns bounding boxes to tiles only if they are fully contained within them. However, future updates will include support for partial overlap.
+## What is this? What is it going to be?
+`plakakia` is an efficient image tiling tool designed to handle bounding boxes within images. It divides images into rectangular tiles based on specified parameters, seamlessly handling overlapping tiles. The tool assigns bounding boxes to tiles that fully contain them, and it also offers an option to eliminate duplicate bounding boxes. While the current version only supports fully contained bounding boxes, future updates will include support for partial overlap.  `plakakia` can handle object detection and segmentation datasets.  
+  
+Currently, the library offers online and offline modes for processing data (refer to the [Usage section](https://github.com/kalfasyan/plakakia#usage) section below for more details):  
 
-It is worth noting that the tool may generate duplicate bounding boxes as a result of tiling. To mitigate this, `plakakia` offers an option to eliminate duplicates. However, it is important to be aware that, depending on the chosen `tile_size` and `step_size`, there is a potential risk of missing some bounding boxes entirely due to the strict duplicate deletion method. To address this limitation, I am considering the implementation of more flexible methods in the future.  
+- In the offline mode, one can use a config file and run a script once to process all data.
+- In the online mode, the `tile_image` function allows processing of images of any dimension.
 
-## What is it going to be?
-Currently, `plakakia` primarily focuses on RGB images in object detection tasks, where the goal is to have tiles that encompass the corresponding bounding boxes. However, I have plans to expand its capabilities to support segmentation tasks as well. This entails tiling both the input images and the associated masks, where each pixel represents a specific category.
-
-In addition, I aim to enhance the tool by providing support for images with more than 3 channels, such as multispectral images. It is important to **note** that `plakakia` already allows online generation of tiles for images with any number of channels (see [examples](examples/) folder). However, offline batch processing is not currently supported.  
-
-So, `plakakia` will hopefully become a versatile tool for tiling images in a variety of tasks using a variety of image formats with the ultimate goal of fast and efficient processing.
-
+There are plans to expand `plakakia`'s capabilities in the offline mode to handle images with more than 3 channels.
+  
 ## Performance
-To ensure optimal performance, `plakakia` extensively utilizes the `multiprocessing` and `numpy` libraries. This enables efficient processing of thousands of images without the use of nested for-loops which is often applied in tiling tasks. For detailed benchmarks on various public datasets, please refer to the information provided below.
+To ensure optimal performance, `plakakia` utilizes the `multiprocessing` and `numpy` libraries. This enables efficient processing of thousands of images without the use of nested for-loops commonly used in tiling tasks. For detailed benchmarks on various public datasets, please refer to the information provided below.
+
   
 # Installation
 
@@ -55,6 +52,7 @@ tiles, coordinates = tile_image(img, tile_size=100, step_size=100)
 ```
 Shape of original image: (500, 500, 3)  
 Shape of tiles array: (25, 100, 100, 3)  
+  
 ![Alt text](logo/tiles.png?raw=true "The result of the tiling process.")  
   
 

@@ -1,3 +1,8 @@
+![Static Badge](https://badgen.net/github/release/kalfasyan/plakakia)
+![Static Badge](https://badgen.net/github/license/kalfasyan/plakakia)
+![Static Badge](https://badgen.net/github/stars/kalfasyan/plakakia)
+![Static Badge](https://badgen.net/github/open-issues/kalfasyan/plakakia)
+
 # plakakia 
 ### /πλακάκια  
 *Python image tiling library for image processing, object detection, etc.*

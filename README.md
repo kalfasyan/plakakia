@@ -105,11 +105,12 @@ Some coordinates in x1,y1,x2,y2 format:
  ☑️ ~~Removing all tiles with duplicate bounding boxes (that appear in other tiles).~~  
  ☑️ ~~Support other annotation formats (e.g. coco).~~ (only input for now)  
  ☑️ ~~Provide tiling functionality without any labels needed.~~  
+ ☑️ ~~Add support for segmentation tasks (tile both input images and masks).~~  
  ⬜️ Add less strict (flexible) duplicate removal methods to avoid missing bounding boxes.  
  ⬜️ Consider bounding boxes in tiles if they *partially* belong to one.  
  ⬜️ Support reading annotations from a dataframe/csv file.  
  ⬜️ Make tiles with multidimensional data offline with config file (e.g. hdf5 hyperspectral images).  
- ⬜️ Add support for segmentation tasks (tile both input images and masks).  
+   
   
 # Want to contribute?
 If you want to contribute to this project, please check the [CONTRIBUTING.md](CONTRIBUTING.md) file.

@@ -41,52 +41,22 @@ It is **highly** recommended that you create a new virtual environment for the i
 
 In this section we cover two main use cases for this library.
 ## A. Offline tile generation with a config file
-This scenario covers the case in which you already have a folder with images and annotations.
- - Make sure you have the plakakia library installed in your Python environment. You can refer to the installation instructions mentioned earlier.
- - Open a terminal or command prompt and activate your Python environment (e.g. `mamba activate plakakia`).
- - Run the following command to execute the make_some_tiles script:  
-  > `make_some_tiles --config path/to/config.yaml`  
-  ⚠️ When executed, the `make_some_tiles` script removes the following folders from the current location: ['tiles/', 'output/', 'annotations/', 'images/', 'logs/']
--    Replace *path/to/config.yaml* with the actual path to your configuration file. This file specifies the settings and parameters for the tiling process. Check an example [`config.yaml`](plakakia/config.yaml).  
- - The script will read your `config.yaml` and generate tiles accordingly.  
-
- Check the output directory you specified in the yaml file for results.  
+This scenario covers the case in which you already have a folder with images and annotations.  
+  
+`make_some_tiles --config path/to/config.yaml`  
+  > ⚠️ When executed, the `make_some_tiles` script removes the following folders from the current location: ['tiles/', 'output/', 'annotations/', 'images/', 'logs/']
+-    Check an example [`config.yaml`](plakakia/config.yaml).  
+  
   
 ## B. Online tile generation
 In this scenario you want to apply tiling on images - *with any number of channels* - that you have loaded in memory (e.g. during model inference).  
 ```
 from plakakia.utils_tiling import tile_image
-import cv2
-import matplotlib.pyplot as plt
 
-# Read image
-img = cv2.imread('../logo/logo.png')
-# Convert to RGB to plot with matplotlib
-img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
-
-# <><><><> PLAKAKIA TILING <><><><> 
 tiles, coordinates = tile_image(img, tile_size=100, step_size=100)
-
-# Print some basic info
-print(f"Shape of original image: {img.shape}")
-print(f"Shape of tiles array: {tiles.shape}")
-print(f"Some coordinates in x1,y1,x2,y2 format: {coordinates[:5]}")
-
-# Plotting the tiles in a grid
-fig, ax = plt.subplots(5, 5, figsize=(10, 10))
-fig.suptitle('Tiles of the original image', fontsize=20)
-for i in range(5):
-    for j in range(5):
-        ax[i, j].imshow(tiles[i*5+j])
-        ax[i, j].axis('off')
-plt.show()
 ```
 Shape of original image: (500, 500, 3)  
 Shape of tiles array: (25, 100, 100, 3)  
-Some coordinates in x1,y1,x2,y2 format:  
-[[  0   0 100 100]  
- [100   0 200 100]  
- [200   0 300 100]]
 ![Alt text](logo/tiles.png?raw=true "The result of the tiling process.")  
   
 

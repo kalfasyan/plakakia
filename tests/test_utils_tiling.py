@@ -23,7 +23,7 @@ from plakakia.utils_annotations import (read_coco_coordinates_from_json,
 from plakakia.utils_tiling import add_border, tile_image
 
 # Read the settings from the config.yaml file
-with open('plakakia/config.yaml', 'r') as f:
+with open('plakakia/config_example.yaml', 'r') as f:
     config = yaml.load(f, Loader=yaml.FullLoader)
 
 # Create a settings object

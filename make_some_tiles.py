@@ -14,11 +14,20 @@ from time import perf_counter
 import yaml
 from tqdm import tqdm
 
-from .settings import Settings
-from .utils_tiling import clear_duplicates, process_tiles
+from plakakia.settings import Settings
+from plakakia.utils_tiling import clear_duplicates, process_tiles
 
 random.seed(3)
 
+# Parse command-line arguments
+parser = argparse.ArgumentParser()
+parser.add_argument('--config', help='Path to config.yaml file')
+args = parser.parse_args()
+
+
+print(args)
+print(100*'-')
+config_path=args.config
 
 def process_tiles_wrapper(args):
     """Wrapper function for the process_tile function."""
@@ -26,7 +35,7 @@ def process_tiles_wrapper(args):
     return process_tiles(t, input_image, input_annotation, settings)
 
 
-def main(config_path=None):
+def main():
     # Delete the tiles and annotations folders if they exist
     [shutil.rmtree(x) if Path(x).exists() else None for x in [
                 'tiles/', 'output/', 'annotations/', 'images/', 'logs/']]
@@ -34,9 +43,10 @@ def main(config_path=None):
     start_time = perf_counter()
 
     if config_path is None:
+        print(f"No config file provided. Using default file.")
         # If no config_path is provided, use the default config.yaml file in the package
-        package_dir = os.path.dirname(os.path.abspath(__file__))
-        config_file = os.path.join(package_dir, 'config.yaml')
+        package_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'plakakia')
+        config_file = os.path.join(package_dir, 'config_example.yaml')
     else:
         config_file = config_path
 
@@ -64,10 +74,5 @@ def main(config_path=None):
         clear_duplicates(settings)
 
 if __name__ == '__main__':
-    # Parse command-line arguments
-    parser = argparse.ArgumentParser()
-    parser.add_argument('--config', help='Path to config.yaml file')
-    args = parser.parse_args()
-
     # Call the main function with the provided config path
-    main(config_path=args.config)
+    main()

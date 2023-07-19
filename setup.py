@@ -24,10 +24,9 @@ setup(
         'pyarrow>=12.0.0',
         'fastparquet>=2023.4.0',
     ],
-    package_data={'plakakia': ['config.yaml']},
     entry_points={
         'console_scripts': [
-            'make_some_tiles = plakakia.make_some_tiles:main',
+            'make_tiles = make_some_tiles:main',
         ],
     },
 )

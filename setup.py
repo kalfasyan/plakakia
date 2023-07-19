@@ -26,7 +26,7 @@ setup(
     ],
     entry_points={
         'console_scripts': [
-            'make_tiles = make_tiles:main',
+            'make_tiles = plakakia.make_tiles:main',
         ],
     },
 )

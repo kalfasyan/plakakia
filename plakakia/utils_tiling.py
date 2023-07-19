@@ -220,7 +220,6 @@ def process_tiles(t, input_im, input_annotation, settings=None):
         assert (im.shape[0]==mask.shape[0]) and (im.shape[1]==mask.shape[1]), "spatial dimensions of image and mask are not the same"
         # Split the mask into tiles
         mask_tiles, mask_coordinates = tile_image(mask.copy(), tile_size=settings.tile_size, step_size=settings.step_size)
-        print(f"mask_tiles.shape: {mask_tiles.shape}")
         # Save the mask tiles in the output directory for masks
         save_image_tiles(filename=file_name,
                         tiles=mask_tiles,

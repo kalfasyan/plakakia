@@ -6,7 +6,6 @@ def read_input_image(im_fname=None, settings=None):
 
     if extension in ['jpg', 'png']:
         image_filename = str(Path(settings.input_dir_images).joinpath(f"{im_fname}.{extension}"))
-        print(image_filename)
 
         image = cv2.imread(image_filename)
         # Pad the image if needed

@@ -36,28 +36,32 @@ It is **highly** recommended that you create a new virtual environment for the i
 
 # Usage
 
-### A. Offline tile generation with a config file
+##### A. Offline tile generation with a config file
     
 `make_tiles --config path/to/config.yaml`  
   > ⚠️ When executed, the `make_tiles` script removes the following folders from the current location: ['tiles/', 'output/', 'annotations/', 'images/', 'logs/']
--    Check an example [`config.yaml`](plakakia/config.yaml).  
+-    Check an example [`config.yaml`](plakakia/config_example.yaml).  
   
   
-### B. Online tile generation
+##### B. Online tile generation
   
 ```
 from plakakia.utils_tiling import tile_image
 
 tiles, coordinates = tile_image(img, tile_size=100, step_size=100)
 ```
-Shape of original image: (500, 500, 3)  
-Shape of tiles array: (25, 100, 100, 3)  
-  
-![Alt text](logo/tiles.png?raw=true "The result of the tiling process.")  
-  
-
-> ⚠️ For more examples, check the [examples](examples/) folder.   
     
+For more examples, check the [examples](examples/) folder.   
+    
+### Streamlit Demo App
+You can run the demo app with the following command:
+```
+streamlit run demo/explore_tiling_output.py
+```
+And when you open http://localhost:8501 in your browser, you should see the following:  
+  
+<img src="logo/tiles.png" alt="drawing" width="40%"/>
+
 # Benchmarks
 
 **Benchmarked on HP Laptop with specs**: AMD Ryzen 5 PRO 6650U; 6 cores; 12 threads; 2.9 GHz
@@ -77,6 +81,7 @@ Shape of tiles array: (25, 100, 100, 3)
  ☑️ ~~Support other annotation formats (e.g. coco).~~ (only input for now)  
  ☑️ ~~Provide tiling functionality without any labels needed.~~  
  ☑️ ~~Add support for segmentation tasks (tile both input images and masks).~~  
+ ☑️ ~~Add a demo app for the users to be able to see the tiling applied on an image.~~   
  ⬜️ Add less strict (flexible) duplicate removal methods to avoid missing bounding boxes.  
  ⬜️ Consider bounding boxes in tiles if they *partially* belong to one.  
  ⬜️ Support reading annotations from a dataframe/csv file.  

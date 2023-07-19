@@ -23,9 +23,6 @@ random.seed(3)
 parser = argparse.ArgumentParser()
 parser.add_argument('--config', help='Path to config.yaml file')
 args = parser.parse_args()
-
-
-print(args)
 print(100*'-')
 config_path=args.config
 

@@ -20,10 +20,10 @@ def read_pascalvoc_coordinates_from_xml(filename=str, settings=None):
 
         # Get bounding box coordinates
         xmlbox = obj.find('bndbox')
-        x_1 = int(xmlbox.find('xmin').text) # type: ignore
-        y_1 = int(xmlbox.find('ymin').text) # type: ignore
-        x_2 = int(xmlbox.find('xmax').text) # type: ignore
-        y_2 = int(xmlbox.find('ymax').text) # type: ignore
+        x_1 = int(float(xmlbox.find('xmin').text)) # type: ignore
+        y_1 = int(float(xmlbox.find('ymin').text)) # type: ignore
+        x_2 = int(float(xmlbox.find('xmax').text)) # type: ignore
+        y_2 = int(float(xmlbox.find('ymax').text)) # type: ignore
 
         # Append to boxes and classes lists
         boxes.append([x_1, y_1, x_2, y_2])

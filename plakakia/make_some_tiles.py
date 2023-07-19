@@ -70,4 +70,4 @@ if __name__ == '__main__':
     args = parser.parse_args()
 
     # Call the main function with the provided config path
-    main(args.config)
+    main(config_path=args.config)

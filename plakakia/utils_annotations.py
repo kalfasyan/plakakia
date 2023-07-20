@@ -182,13 +182,13 @@ def save_to_pascal_voc_from_df(dataframe,
             name.text = str(row["box_class"])
             bndbox = ET.SubElement(obj, "bndbox")
             xmin = ET.SubElement(bndbox, "xmin")
-            xmin.text = str(np.abs(row["box_x1"] - row["tile_x1"]))
+            xmin.text = str(row["box_x1"])
             ymin = ET.SubElement(bndbox, "ymin")
-            ymin.text = str(np.abs(row["box_y1"] - row["tile_y1"]))
+            ymin.text = str(row["box_y1"])
             xmax = ET.SubElement(bndbox, "xmax")
-            xmax.text = str(np.abs(row["box_x2"] - row["tile_x1"]))
+            xmax.text = str(row["box_x2"])
             ymax = ET.SubElement(bndbox, "ymax")
-            ymax.text = str(np.abs(row["box_y2"] - row["tile_y1"]))
+            ymax.text = str(row["box_y2"])
 
         # Write the XML to a file
         xml_tile_name = f"{tile_name}.xml"

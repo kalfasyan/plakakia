@@ -16,6 +16,10 @@ logger = logging.getLogger(__name__)
 def tile_image(image, tile_size=250, step_size=50):
     """ Tile an image into overlapping tiles. """
 
+    # Check if the image is grayscale (1 channel)
+    if len(image.shape) == 2:
+        image = image[..., np.newaxis]  # Add a third dimension for compatibility
+
     # Compute the number of rows and columns of tiles
     rows = (image.shape[0] - tile_size) // step_size + 1
     cols = (image.shape[1] - tile_size) // step_size + 1
@@ -40,6 +44,10 @@ def tile_image(image, tile_size=250, step_size=50):
 
     # Stack the tile indices and coordinates into a single array
     coordinates = np.stack((x_1, y_1, x_2, y_2), axis=-1)
+
+    # If the input was grayscale, convert the tiles to grayscale
+    if len(image.shape) == 2:
+        tiles = tiles[..., 0]
 
     return tiles, coordinates
 

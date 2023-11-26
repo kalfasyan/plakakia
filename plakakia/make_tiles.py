@@ -19,12 +19,7 @@ from plakakia.utils_tiling import clear_duplicates, process_tiles
 
 random.seed(3)
 
-# Parse command-line arguments
-parser = argparse.ArgumentParser()
-parser.add_argument('--config', help='Path to config.yaml file')
-args = parser.parse_args()
-print(100*'-')
-config_path=args.config
+
 
 def process_tiles_wrapper(args):
     """Wrapper function for the process_tile function."""
@@ -71,5 +66,12 @@ def main():
         clear_duplicates(settings)
 
 if __name__ == '__main__':
+    # Parse command-line arguments
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--config', help='Path to config.yaml file')
+    args = parser.parse_args()
+    print(100*'-')
+    config_path=args.config
+
     # Call the main function with the provided config path
     main()

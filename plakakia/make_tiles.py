@@ -19,8 +19,6 @@ from plakakia.utils_tiling import clear_duplicates, process_tiles
 
 random.seed(3)
 
-
-
 def process_tiles_wrapper(args):
     """Wrapper function for the process_tile function."""
     t, input_image, input_annotation, settings = args
@@ -28,6 +26,13 @@ def process_tiles_wrapper(args):
 
 
 def main():
+    # Parse command-line arguments
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--config', help='Path to config.yaml file')
+    args = parser.parse_args()
+    print(100*'-')
+    config_path=args.config
+
     # Delete the tiles and annotations folders if they exist
     [shutil.rmtree(x) if Path(x).exists() else None for x in [
                 'tiles/', 'output/', 'annotations/', 'images/', 'logs/']]
@@ -66,12 +71,5 @@ def main():
         clear_duplicates(settings)
 
 if __name__ == '__main__':
-    # Parse command-line arguments
-    parser = argparse.ArgumentParser()
-    parser.add_argument('--config', help='Path to config.yaml file')
-    args = parser.parse_args()
-    print(100*'-')
-    config_path=args.config
-
     # Call the main function with the provided config path
     main()

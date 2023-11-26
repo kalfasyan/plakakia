@@ -3,8 +3,8 @@
     "output_extension_images": "jpg",
     "tile_size": 70, # tile size in pixels
     "step_size": 70, # step size in pixels for sliding window
-    "input_dir_images": "/home/kalfasyan/data/Object_Detection/traffic_signs_yolo/images",
-    "input_dir_annotations": "/home/kalfasyan/data/Object_Detection/traffic_signs_yolo/annotations",
+    "input_dir_images": "/home/kalfasyan/data/OBJECT_DETECTION/solar-panels/images",
+    "input_dir_annotations": "/home/kalfasyan/data/OBJECT_DETECTION/solar-panels/annotations",
     "input_format_annotations": "yolo", # yolo, pascal_voc, coco or segmentation
     "output_dir_images": "output/images",
     "output_dir_annotations": "output/annotations",

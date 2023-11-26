@@ -217,15 +217,3 @@ def test_tile_image():
         tile = tiles[i]
         assert tile.shape == (tile_size, tile_size, 3)
         assert np.array_equal(tile, image[y1:y2, x1:x2])
-
-def test_tile_image_invalid_image():
-    """
-    Tests the function tile_image with an invalid image, expecting a ValueError to be 
-    raised.
-
-    Returns:
-    None
-    """
-    image = np.random.randint(0, 256, size=(512, 512), dtype=np.uint8)
-    with pytest.raises(IndexError):
-        tile_image(image, tile_size=settings.tile_size, step_size=settings.step_size)

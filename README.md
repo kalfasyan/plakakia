@@ -39,9 +39,6 @@ It is **highly** recommended that you create a new virtual environment for the i
 ##### A. Offline tile generation with a config file
     
 `make_tiles --config path/to/config.yaml`  
-  > ⚠️ When executed, the `make_tiles` script removes the following folders from the current location: ['tiles/', 'output/', 'annotations/', 'images/', 'logs/']
--    Check an example [`config.yaml`](plakakia/config_example.yaml).  
-  
   
 ##### B. Online tile generation
   

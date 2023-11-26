@@ -33,10 +33,6 @@ def main():
     print(100*'-')
     config_path=args.config
 
-    # Delete the tiles and annotations folders if they exist
-    [shutil.rmtree(x) if Path(x).exists() else None for x in [
-                'tiles/', 'output/', 'annotations/', 'images/', 'logs/']]
-
     start_time = perf_counter()
 
     if config_path is None:

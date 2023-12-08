@@ -153,10 +153,20 @@ def save_boxes(tiles=np.array([]),
         # Save the tile with the tile coordinates in the filename
         extension = settings.output_extension_images
         output_dir = settings.output_dir_images
-        file_path = f"tile_{filename}_{tile_coord[0]}_{tile_coord[1]}_{tile_coord[2]}_{tile_coord[3]}.{extension}"
-        save_path = Path(output_dir) / Path(file_path)
+        dataset_name = settings.dataset_name
 
-        cv2.imwrite(save_path.as_posix(), tile)
+        if extension in ['jpg','png']: 
+            file_path = f"tile_{filename}_{tile_coord[0]}_{tile_coord[1]}_{tile_coord[2]}_{tile_coord[3]}.{extension}"
+            save_path = Path(output_dir) / Path(file_path)
+
+            cv2.imwrite(save_path.as_posix(), tile)
+
+        if extension in ['hdf5','h5']: 
+            file_path = f"tile_{filename}_{tile_coord[0]}_{tile_coord[1]}_{tile_coord[2]}_{tile_coord[3]}.{extension}"
+            save_path = Path(output_dir) / Path(file_path)
+
+            hf=h5py.File(save_path,'w')
+            hf.create_dataset(f'{dataset_name}',data = tile)
 
     # Create a dataframe with the results
     results_df = pd.DataFrame(results, 

@@ -1,8 +1,11 @@
 import cv2
 from pathlib import Path
+import h5py
+import numpy as np 
 
 def read_input_image(im_fname=None, settings=None):
     extension = settings.input_extension_images
+    dataset_name = settings.dataset_name
 
     if extension in ['jpg', 'png']:
         image_filename = str(Path(settings.input_dir_images).joinpath(f"{im_fname}.{extension}"))
@@ -11,6 +14,12 @@ def read_input_image(im_fname=None, settings=None):
         # Pad the image if needed
         if settings.pad_image:
             image = add_border(image, settings=settings, color=[0, 0, 0])
+    if extension in ['hdf5', 'h5']: 
+        image_filename = str(Path(settings.input_dir_images).joinpath(f"{im_fname}.{extension}"))
+
+        image_h5 = h5py.File(image_filename)
+        image = image_h5[f'{dataset_name}']
+        image = np.array(image)
     else:
         raise NotImplementedError(f"Extension {extension} not implemented.")
 

@@ -2,6 +2,7 @@ import logging
 from dataclasses import dataclass, field
 from logging.handlers import RotatingFileHandler
 from pathlib import Path
+import h5py
 
 import imagesize
 import psutil
@@ -16,6 +17,8 @@ class Settings():
     input_extension_images: str = 'jpg'
     # Define the image output file extension
     output_extension_images: str = 'jpg'
+    # Define the name of the image dataset in a hdf5 file 
+    dataset_name: str = 'Hypercube'
     # Set the annotation file extensions
     input_extension_annotations: str = 'txt'
     # Whether to pad the image with a border
@@ -121,19 +124,37 @@ class Settings():
         if self.validate_settings:
             # Calculate the minimum image dimension
             minimum_image_dim = float('inf')
-            for img in tqdm(self.input_images,
-                            desc='Validating settings..',
-                            total=len(self.input_images)):
-                width, height = imagesize.get(img)
-                minimum_image_dim = min(minimum_image_dim, width, height)
-                if self.input_format_annotations in ['yolo', 'pascal_voc']:
-                    # Check if there is an annotation for each image
-                    assert Path(img).stem in [Path(a).stem for a in self.input_annotations], \
-                        f"No annotation found for image {img}."
-            # Check if the tile size is smaller than the smallest image dimension
-            assert minimum_image_dim >= self.tile_size, \
-                f"The tile size is larger than the smallest image dimension: {minimum_image_dim}. \n\
-                    Try setting a smaller tile size."
+            if self.input_extension_images in ['jpg','png']: 
+                for img in tqdm(self.input_images,
+                                desc='Validating settings..',
+                                total=len(self.input_images)):
+                    width, height = imagesize.get(img)
+                    minimum_image_dim = min(minimum_image_dim, width, height)
+                    if self.input_format_annotations in ['yolo', 'pascal_voc']:
+                        # Check if there is an annotation for each image
+                        assert Path(img).stem in [Path(a).stem for a in self.input_annotations], \
+                            f"No annotation found for image {img}."
+                # Check if the tile size is smaller than the smallest image dimension
+                assert minimum_image_dim >= self.tile_size, \
+                    f"The tile size is larger than the smallest image dimension: {minimum_image_dim}. \n\
+                        Try setting a smaller tile size."
+            elif self.input_extension_images in ['hdf5','h5']: 
+                for img in tqdm(self.input_images,
+                                desc='Validating settings..',
+                                total=len(self.input_images)):
+                    im = h5py.File(img,'r')
+                    im = im[f'{self.dataset_name}']
+                    width, height, depth = im.shape
+                    minimum_image_dim = min(minimum_image_dim, width, height)
+                    if self.input_format_annotations in ['yolo', 'pascal_voc']:
+                        # Check if there is an annotation for each image
+                        assert Path(img).stem in [Path(a).stem for a in self.input_annotations], \
+                            f"No annotation found for image {img}."
+                # Check if the tile size is smaller than the smallest image dimension
+                assert minimum_image_dim >= self.tile_size, \
+                    f"The tile size is larger than the smallest image dimension: {minimum_image_dim}. \n\
+                        Try setting a smaller tile size."
+            
 
         # Create the inverse mapping for the annotation labels
         self.inv_annotation_mapping = {v: k for k, v in self.annotation_mapping.items()}

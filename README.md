@@ -39,6 +39,7 @@ It is **highly** recommended that you create a new virtual environment for the i
 ##### A. Offline tile generation with a config file
     
 `make_tiles --config path/to/config.yaml`  
+> Here's an [example config file](plakakia/config_example.yaml).  
   
 ##### B. Online tile generation
   

@@ -3,6 +3,7 @@ charset-normalizer==3.1.0
 contourpy==1.0.7
 cycler==0.11.0
 fonttools==4.39.0
+h5py
 idna==3.4
 kiwisolver==1.4.4
 matplotlib==3.7.1

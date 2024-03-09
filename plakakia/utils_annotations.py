@@ -6,6 +6,7 @@ from tqdm import tqdm
 from pathlib import Path
 import json
 import cv2
+import h5py
 
 def read_pascalvoc_coordinates_from_xml(filename=str, settings=None):
     ''' Read coordinates from PascalVOC xml file. '''
@@ -244,7 +245,17 @@ def save_image_tiles(filename=None, tiles=None, coordinates=None, settings=None,
                                        desc="Saving mask tiles",
                                        total=len(tiles)):
         # Save the tile
-        file_path = f"{prefix}_{filename}_{tile_coord[0]}_{tile_coord[1]}_{tile_coord[2]}_{tile_coord[3]}.{extension}"
-        save_path = Path(output_dir) / Path(file_path)
+        if extension in ['jpg','[png]']: 
+            file_path = f"{prefix}_{filename}_{tile_coord[0]}_{tile_coord[1]}_{tile_coord[2]}_{tile_coord[3]}.{extension}"
+            save_path = Path(output_dir) / Path(file_path)
 
-        cv2.imwrite(save_path.as_posix(), tile)
+            cv2.imwrite(save_path.as_posix(), tile)
+
+        if extension in ['hdf5','h5']: 
+            dataset_name = settings.dataset_name
+            
+            file_path = f"{prefix}_{filename}_{tile_coord[0]}_{tile_coord[1]}_{tile_coord[2]}_{tile_coord[3]}.{extension}"
+            save_path = Path(output_dir) / Path(file_path)
+
+            hf = h5py.File(save_path, 'w')
+            hf.create_dataset(dataset_name,data=tile)

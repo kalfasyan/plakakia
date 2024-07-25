@@ -15,7 +15,7 @@ import yaml
 from tqdm import tqdm
 
 from plakakia.settings import Settings
-from plakakia.utils_tiling import clear_duplicates, process_tiles
+from plakakia.tiling import clear_duplicates, process_tiles
 
 random.seed(3)
 

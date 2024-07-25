@@ -49,7 +49,7 @@ if submit_button:
     cv2.imwrite("image.png", image)
 
     try:
-        from plakakia.utils_tiling import tile_image
+        from plakakia.tiling import tile_image
         tiles, coordinates = tile_image(image, tile_size, step_size)
     except Exception as e:
         st.error("Error: " + str(e))

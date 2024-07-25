@@ -6,7 +6,7 @@ from pathlib import Path
 import imagesize
 import psutil
 from tqdm import tqdm
-from .utils_annotations import read_coco_coordinates_from_json
+from .annotations import read_coco_coordinates_from_json
 
 # Create a dataclass for storing the settings
 @dataclass

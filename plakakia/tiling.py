@@ -8,8 +8,8 @@ import numpy as np
 import pandas as pd
 from tqdm import tqdm
 
-from .utils_annotations import *
-from .utils_images import *
+from .annotations import *
+from .images import *
 
 logger = logging.getLogger(__name__)
 

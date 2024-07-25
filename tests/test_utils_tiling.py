@@ -17,10 +17,10 @@ import yaml
 from lxml import etree as ET
 
 from plakakia.settings import Settings
-from plakakia.utils_annotations import (read_coco_coordinates_from_json,
+from plakakia.annotations import (read_coco_coordinates_from_json,
                                read_pascalvoc_coordinates_from_xml,
                                read_yolo_coordinates_from_txt)
-from plakakia.utils_tiling import add_border, tile_image
+from plakakia.tiling import add_border, tile_image
 
 # Read the settings from the config.yaml file
 with open('plakakia/config_example.yaml', 'r') as f:

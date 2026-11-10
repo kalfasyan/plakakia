@@ -25,8 +25,8 @@ from plakakia import tile_image
 
 image = np.zeros((1080, 1920, 3), dtype=np.uint8)
 tiles, coords = tile_image(image, tile_size=512, step_size=384, cover_edges=True)
-tiles.shape   # (15, 512, 512, 3)
-coords[:2]    # [[0, 0, 512, 512], [384, 0, 896, 512]]  (x1, y1, x2, y2)
+tiles.shape  # (15, 512, 512, 3)
+coords[:2]  # [[0, 0, 512, 512], [384, 0, 896, 512]]  (x1, y1, x2, y2)
 ```
 
 Head to [Getting started](getting-started.md).

@@ -1,90 +1,149 @@
-![Static Badge](https://badgen.net/github/release/kalfasyan/plakakia)
-![Static Badge](https://badgen.net/github/license/kalfasyan/plakakia)
-![Static Badge](https://badgen.net/github/stars/kalfasyan/plakakia)
-![Static Badge](https://badgen.net/github/open-issues/kalfasyan/plakakia)
+<p align="center">
+  <img src="https://raw.githubusercontent.com/kalfasyan/plakakia/main/docs/assets/logo.png" alt="plakakia logo" width="160">
+</p>
 
-# plakakia 
-### /πλακάκια  
-*Python image tiling library for image processing, object detection, etc.*
-    
-![Alt text](logo/logo.png?raw=true "This is a \"plakaki\", meaning tile in Greek.")  
+<h1 align="center">plakakia</h1>
 
-## What is this? What is it going to be?
-`plakakia` is an efficient image tiling tool designed to handle bounding boxes within images. It divides images into rectangular tiles based on specified parameters, seamlessly handling overlapping tiles. The tool assigns bounding boxes to tiles that fully contain them, and it also offers an option to eliminate duplicate bounding boxes. While the current version only supports fully contained bounding boxes, future updates will include support for partial overlap.  `plakakia` can handle object detection and segmentation datasets.  
-  
-Currently, the library offers online and offline modes for processing data (refer to the [Usage section](https://github.com/kalfasyan/plakakia#usage) section below for more details):  
+<p align="center"><em>πλακάκια: fast image tiling for computer vision datasets</em></p>
 
-- In the offline mode, one can use a config file and run a script once to process all data.
-- In the online mode, the `tile_image` function allows processing of images of any dimension.
+<p align="center">
+  <a href="https://pypi.org/project/plakakia/"><img src="https://img.shields.io/pypi/v/plakakia" alt="PyPI"></a>
+  <a href="https://pypi.org/project/plakakia/"><img src="https://img.shields.io/pypi/pyversions/plakakia" alt="Python versions"></a>
+  <a href="https://github.com/kalfasyan/plakakia/actions/workflows/ci.yml"><img src="https://github.com/kalfasyan/plakakia/actions/workflows/ci.yml/badge.svg" alt="CI"></a>
+  <a href="https://kalfasyan.github.io/plakakia"><img src="https://img.shields.io/badge/docs-mkdocs-teal" alt="Docs"></a>
+  <a href="https://github.com/astral-sh/ruff"><img src="https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/astral-sh/ruff/main/assets/badge/v2.json" alt="Ruff"></a>
+  <a href="LICENSE"><img src="https://img.shields.io/github/license/kalfasyan/plakakia" alt="License"></a>
+</p>
 
-There are plans to expand `plakakia`'s capabilities in the offline mode to handle images with more than 3 channels.
-  
-## Performance
-To ensure optimal performance, `plakakia` utilizes the `multiprocessing` and `numpy` libraries. This enables efficient processing of thousands of images without the use of nested for-loops commonly used in tiling tasks. For detailed benchmarks on various public datasets, please refer to the information provided below.
+**plakakia** splits images into (overlapping) square tiles and carries their labels along:
+bounding boxes in **YOLO**, **Pascal VOC** or **COCO** format, or **segmentation masks**.
+Use it to train and run detectors on large images (aerial, satellite, microscopy, inspection)
+at full resolution.
 
-  
-# Installation
+- **Fast**: vectorised NumPy tiling and box assignment, plus a multiprocess pipeline.
+- **Small**: four dependencies (`numpy`, `opencv-python-headless`, `pyyaml`, `tqdm`).
+- **Any image**: grayscale, RGB(A), 16-bit, or arrays with any number of channels.
+- **Typed and tested**: strict mypy, full test suite on Linux, macOS and Windows.
 
-It is **highly** recommended that you create a new virtual environment for the installation:    
- 1. Download and install [Mamba](https://mamba.readthedocs.io/en/latest/installation.html) (or [Anaconda](https://www.anaconda.com/products/distribution)). 
- 2. Create a virtual environment:  
- `mamba create -n plakakia jupyterlab nb_conda_kernels ipykernel ipywidgets pip -y`  
- 3. Activate the environment:  
- `mamba activate plakakia`
-4. Run the following command to install the library:  
-`pip install plakakia`  
+## Installation
 
-# Usage
-
-##### A. Offline tile generation with a config file
-    
-`make_tiles --config path/to/config.yaml`  
-> Here's an [example config file](plakakia/config_example.yaml).  
-  
-##### B. Online tile generation
-  
+```bash
+uv add plakakia        # or: pip install plakakia
 ```
-from plakakia.utils_tiling import tile_image
 
-tiles, coordinates = tile_image(img, tile_size=100, step_size=100)
+Requires Python 3.10+.
+
+## Quick start
+
+### Tile an array (online)
+
+```python
+import cv2
+from plakakia import tile_image
+
+image = cv2.imread("scene.jpg")
+tiles, coords = tile_image(image, tile_size=640, step_size=480, cover_edges=True)
+# tiles:  (N, 640, 640, 3) array
+# coords: (N, 4) array of (x1, y1, x2, y2), so tiles[i] == image[y1:y2, x1:x2]
 ```
-    
-For more examples, check the [examples](examples/) folder.   
-    
-### Streamlit Demo App
-You can run the demo app with the following command:
+
+With boxes:
+
+```python
+from plakakia import assign_boxes_to_tiles, clip_boxes_to_tile, read_yolo
+
+ann = read_yolo("scene.txt", image_size=image.shape[:2])
+assignment = assign_boxes_to_tiles(ann.boxes, coords, min_visibility=0.6)  # (tiles, boxes) bool
+
+for t in range(len(tiles)):
+    idx = assignment[t].nonzero()[0]
+    boxes, labels = clip_boxes_to_tile(ann.boxes[idx], coords[t]), ann.labels[idx]
 ```
-streamlit run demo/explore_tiling_output.py
+
+### Tile a dataset (offline)
+
+```bash
+plakakia --config config.yaml
 ```
-And when you open http://localhost:8501 in your browser, you should see the following:  
-  
-<img src="logo/tiles.png" alt="drawing" width="40%"/>
 
-# Benchmarks
+```yaml
+input_dir_images: data/images
+input_dir_annotations: data/labels
+input_format_annotations: yolo   # yolo | pascal_voc | coco | segmentation | none
+output_format_annotations: yolo  # yolo | pascal_voc
+tile_size: 640
+step_size: 480
+cover_edges: true
+num_workers: -1                  # all cores
+```
 
-**Benchmarked on HP Laptop with specs**: AMD Ryzen 5 PRO 6650U; 6 cores; 12 threads; 2.9 GHz
+See [`examples/config.yaml`](examples/config.yaml) for every option and the
+[CLI documentation](https://kalfasyan.github.io/plakakia/cli/) for details. Or use it from
+Python:
 
-| Dataset | Source | Formats (images/labels) | Number of images | tile_size | step_size | tiles generated | plakakia performance |
-| ------------- | ------------- | ------------- | ------------- | ------------- | ------------- | ------------- | ------------- |
-| Solar Panels v2  | [RoboFlow](https://universe.roboflow.com/roboflow-100/solar-panels-taxvb/dataset/2) | jpg/COCO | 112  | 150 | 50 | 3.075 | 1,11 sec | 
-| Traffic Signs  | [Kaggle](https://www.kaggle.com/datasets/valentynsichkar/traffic-signs-dataset-in-yolo-format) | jpg/YOLO | 741  | 300 | 200 | 1.695 | 2,8 sec | 
-| Hard Hat Workers v2  | [RoboFlow](https://public.roboflow.com/object-detection/hard-hat-workers/2) | jpg/YOLO | 5.269 | 100 | 50 | 21.678 | 6,94 sec| 
-| Microsoft COCO dataset  | [RoboFlow](https://public.roboflow.com/object-detection/microsoft-coco-subset) | jpg/YOLO | 121.408 | 200 | 150 | 177.039 | 3 min 4 sec| 
+```python
+from plakakia import TilingConfig, run
 
-# TODO list
-  
- ☑️ ~~Fix reading of classes from annotations (create a 'mapper' dictionary to map classes to numerical values).~~  
- ☑️ ~~Read settings from a file (e.g. json).~~  
- ☑️ ~~Removing all tiles with duplicate bounding boxes (that appear in other tiles).~~  
- ☑️ ~~Support other annotation formats (e.g. coco).~~ (only input for now)  
- ☑️ ~~Provide tiling functionality without any labels needed.~~  
- ☑️ ~~Add support for segmentation tasks (tile both input images and masks).~~  
- ☑️ ~~Add a demo app for the users to be able to see the tiling applied on an image.~~   
- ⬜️ Add less strict (flexible) duplicate removal methods to avoid missing bounding boxes.  
- ⬜️ Consider bounding boxes in tiles if they *partially* belong to one.  
- ⬜️ Support reading annotations from a dataframe/csv file.  
- ⬜️ Make tiles with multidimensional data offline with config file (e.g. hdf5 hyperspectral images).  
-   
-  
-# Want to contribute?
-If you want to contribute to this project, please check the [CONTRIBUTING.md](CONTRIBUTING.md) file.
+results = run(TilingConfig.from_yaml("config.yaml"))
+```
+
+### Demo app
+
+```bash
+uv run --extra demo streamlit run demo/app.py
+```
+
+<img src="docs/assets/demo.png" alt="Streamlit demo" width="40%"/>
+
+## Features
+
+| | |
+| --- | --- |
+| Input labels | YOLO (boxes and polygons), Pascal VOC, COCO, PNG masks, or none |
+| Output labels | YOLO, Pascal VOC, PNG mask tiles |
+| Overlap | any `step_size` ≤ or > `tile_size` |
+| Edge handling | `cover_edges` adds border-aligned tiles; `pad_image` pads first |
+| Partial boxes | `min_visibility` keeps and clips partially visible boxes |
+| Deduplication | `clear_duplicates` keeps the fewest tiles that still contain every box |
+| Background tiles | `save_empty_tiles` |
+
+## Benchmarks
+
+Measured with [`benchmarks/bench_pipeline.py`](benchmarks/bench_pipeline.py)
+(100 synthetic 1024×1024 JPEG images, 20 boxes each, tile 256, step 128, 4-core VM):
+
+| | 1 worker | 4 workers |
+| --- | --- | --- |
+| Offline pipeline (images/s) | 24 | 66 |
+
+The pipeline is bound by JPEG decoding and encoding (about 80% of the run time).
+`tile_image` on a 4096×4096 RGB image with 961 overlapping tiles takes about 48 ms.
+
+Results from earlier versions on public datasets
+(AMD Ryzen 5 PRO 6650U, 6 cores):
+
+| Dataset | Format | Images | tile / step | Tiles | Time |
+| --- | --- | --- | --- | --- | --- |
+| [Solar Panels v2](https://universe.roboflow.com/roboflow-100/solar-panels-taxvb/dataset/2) | jpg/COCO | 112 | 150 / 50 | 3,075 | 1.1 s |
+| [Traffic Signs](https://www.kaggle.com/datasets/valentynsichkar/traffic-signs-dataset-in-yolo-format) | jpg/YOLO | 741 | 300 / 200 | 1,695 | 2.8 s |
+| [Hard Hat Workers v2](https://public.roboflow.com/object-detection/hard-hat-workers/2) | jpg/YOLO | 5,269 | 100 / 50 | 21,678 | 6.9 s |
+| [MS COCO subset](https://public.roboflow.com/object-detection/microsoft-coco-subset) | jpg/YOLO | 121,408 | 200 / 150 | 177,039 | 3 min 4 s |
+
+## Roadmap
+
+- [x] YOLO, Pascal VOC, COCO and segmentation inputs
+- [x] Partially visible boxes (`min_visibility`)
+- [x] Full image coverage (`cover_edges`)
+- [ ] COCO output
+- [ ] Rectangular tiles
+- [ ] Multi-channel (e.g. hyperspectral, `.npy`/HDF5) inputs in the offline pipeline
+- [ ] Stitching predictions back to full-image coordinates (with NMS)
+
+## Contributing
+
+Contributions are welcome. See [CONTRIBUTING.md](CONTRIBUTING.md) for the uv-based
+development setup.
+
+## License
+
+[GPL-3.0-or-later](LICENSE)

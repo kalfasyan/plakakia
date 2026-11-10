@@ -1,0 +1,60 @@
+# Changelog
+
+All notable changes to this project are documented here. The format follows
+[Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and the project uses
+[Semantic Versioning](https://semver.org/).
+
+## [0.3.0] - Unreleased
+
+A ground-up modernisation of the code base. The YAML config keys and the output file
+naming are backwards compatible; the Python API is new.
+
+### Added
+- `cover_edges` option: border-aligned tiles so no pixels are dropped.
+- `min_visibility` option: keep partially visible boxes (clipped to the tile).
+- `save_empty_tiles` option to also export background tiles.
+- `input_format_annotations: none` to tile image folders without labels.
+- YOLO segmentation polygons are accepted as input (converted to boxes).
+- Pascal VOC output writes class names (from `annotation_mapping`) instead of ids.
+- `plakakia` CLI (`make_tiles` kept as an alias), `python -m plakakia`, `--num-workers`,
+  `--quiet`, `--verbose` and `--version` flags.
+- Public, typed API (`py.typed`): `tile_coordinates`, `assign_boxes_to_tiles`,
+  `box_visibility`, `clip_boxes_to_tile`, `select_unique_tiles`, `Annotations`,
+  `TilingConfig`, `run`, and readers/writers for every format.
+- Documentation site (MkDocs Material), CI on Linux/macOS/Windows and Python 3.10–3.13,
+  release workflow with PyPI trusted publishing, pre-commit hooks, benchmark script.
+
+### Changed
+- Packaging moved to `pyproject.toml` (hatchling) with a `src/` layout, managed with
+  [uv](https://docs.astral.sh/uv/) (`uv.lock`).
+- Runtime dependencies reduced from 13 to 4 (`numpy`, `opencv-python-headless`, `pyyaml`,
+  `tqdm`); pandas, matplotlib, seaborn, scipy, lxml, psutil, imagesize, pyarrow and
+  fastparquet are gone.
+- `tile_image` uses `sliding_window_view` instead of `as_strided` and returns
+  independent, writable tiles.
+- Box-to-tile assignment is a single vectorised operation over all tiles and boxes.
+- Duplicate removal runs per image inside the workers instead of through temporary
+  parquet files and a second pass.
+- `TilingConfig` (replaces `Settings`) is immutable, validates eagerly and has no side
+  effects; output directories are created by `run`.
+- Image I/O is exception based and works with non-ASCII paths; images are read unchanged
+  (grayscale, alpha and 16-bit are preserved).
+- YOLO coordinates are rounded rather than truncated when converted to pixels.
+
+### Fixed
+- Boxes drawn with `draw_boxes` leaked into neighbouring overlapping tiles.
+- Grayscale input to `tile_image` returned `(N, t, t, 1)` instead of `(N, t, t)`.
+- `pad_image` did not shift the boxes, so labels were misaligned with padded tiles.
+- User-provided `pad_size` and partial-overlap settings were silently overwritten.
+- `clear_duplicates` compared boxes across different images.
+- Segmentation masks were read as 3-channel BGR and could be saved as lossy JPEG.
+- YOLO label files were opened in append mode, duplicating labels on re-runs.
+- The default config path and the README import path (`plakakia.utils_tiling`) were broken.
+
+### Removed
+- `plot_example_tile_with_yolo_annotation` and `export_yolo_annotation_from_csv`.
+- The `log`, `log_folder` and `validate_settings` config keys (ignored with a warning).
+
+## [0.2.1]
+
+Last release before the modernisation.

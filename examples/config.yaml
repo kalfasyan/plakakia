@@ -1,0 +1,34 @@
+# Example configuration for `plakakia --config examples/config.yaml`.
+# Every key is optional except `input_dir_images` (and `input_dir_annotations`
+# unless `input_format_annotations: none`). See the docs for the full reference.
+
+# ----------------------------------------------------------------- inputs
+input_dir_images: data/images
+input_dir_annotations: data/labels
+input_extension_images: jpg
+input_format_annotations: yolo  # yolo | pascal_voc | coco | segmentation | none
+
+# ----------------------------------------------------------------- outputs
+output_dir_images: output/images
+output_dir_annotations: output/annotations
+output_extension_images: jpg
+output_format_annotations: yolo  # yolo | pascal_voc
+
+# ----------------------------------------------------------------- tiling
+tile_size: 640      # side of the square tiles in pixels
+step_size: 480      # sliding-window stride; < tile_size means overlapping tiles
+cover_edges: true   # add border-aligned tiles so no pixels are dropped
+pad_image: false
+pad_size: 10
+
+# ----------------------------------------------------------------- labels
+min_visibility: 1.0       # 1.0 = keep only boxes fully inside a tile
+save_empty_tiles: false   # keep tiles without boxes (background samples)
+clear_duplicates: false   # drop tiles whose boxes all appear in an earlier tile
+annotation_mapping:       # class name -> id (needed for Pascal VOC text labels)
+  person: 0
+  car: 1
+
+# ----------------------------------------------------------------- misc
+draw_boxes: false   # draw boxes on saved tiles, for inspection only
+num_workers: -1     # -1 = all CPU cores

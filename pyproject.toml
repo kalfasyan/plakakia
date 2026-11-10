@@ -1,0 +1,119 @@
+[build-system]
+requires = ["hatchling>=1.25"]
+build-backend = "hatchling.build"
+
+[project]
+name = "plakakia"
+version = "0.3.0"
+description = "Fast image tiling for computer vision: images, bounding boxes (YOLO, Pascal VOC, COCO) and segmentation masks."
+readme = "README.md"
+license = "GPL-3.0-or-later"
+license-files = ["LICENSE"]
+authors = [{ name = "Ioannis Kalfas", email = "kalfasyan@gmail.com" }]
+requires-python = ">=3.10"
+keywords = ["tiling", "image-tiling", "computer-vision", "object-detection", "segmentation", "yolo", "coco", "pascal-voc"]
+classifiers = [
+  "Development Status :: 4 - Beta",
+  "Intended Audience :: Developers",
+  "Intended Audience :: Science/Research",
+  "Operating System :: OS Independent",
+  "Programming Language :: Python :: 3",
+  "Programming Language :: Python :: 3 :: Only",
+  "Programming Language :: Python :: 3.10",
+  "Programming Language :: Python :: 3.11",
+  "Programming Language :: Python :: 3.12",
+  "Programming Language :: Python :: 3.13",
+  "Topic :: Scientific/Engineering :: Image Processing",
+  "Topic :: Scientific/Engineering :: Artificial Intelligence",
+  "Typing :: Typed",
+]
+dependencies = [
+  "numpy>=1.24",
+  "opencv-python-headless>=4.8",
+  "pyyaml>=6.0",
+  "tqdm>=4.65",
+]
+
+[project.optional-dependencies]
+demo = ["streamlit>=1.30"]
+
+[project.scripts]
+plakakia = "plakakia.cli:main"
+make_tiles = "plakakia.cli:main"  # backwards-compatible alias
+
+[project.urls]
+Homepage = "https://github.com/kalfasyan/plakakia"
+Documentation = "https://kalfasyan.github.io/plakakia"
+Repository = "https://github.com/kalfasyan/plakakia"
+Issues = "https://github.com/kalfasyan/plakakia/issues"
+Changelog = "https://github.com/kalfasyan/plakakia/blob/main/CHANGELOG.md"
+
+[dependency-groups]
+test = ["pytest>=8", "pytest-cov>=5"]
+lint = ["ruff>=0.8", "mypy>=1.13", "types-PyYAML", "types-tqdm", "pre-commit>=4"]
+docs = ["mkdocs-material>=9.5", "mkdocstrings[python]>=0.27"]
+dev = [
+  { include-group = "test" },
+  { include-group = "lint" },
+  { include-group = "docs" },
+]
+
+[tool.uv]
+default-groups = ["dev"]
+
+[tool.hatch.build.targets.sdist]
+include = ["src", "tests", "README.md", "CHANGELOG.md", "LICENSE"]
+
+# --------------------------------------------------------------------- ruff
+[tool.ruff]
+line-length = 100
+target-version = "py310"
+src = ["src", "tests"]
+extend-exclude = ["examples/*.ipynb"]
+
+[tool.ruff.lint]
+select = [
+  "E", "W", "F", "I", "UP", "B", "C4", "SIM", "PTH", "RUF", "NPY", "PERF", "PL", "N", "D",
+]
+ignore = [
+  "PLR0913", # many arguments is fine for public APIs with keyword args
+  "PLR2004", # magic values
+  "PLR0912", "PLR0915",
+  "D105", "D107",
+  "D100", "D104", # module/package docstrings optional
+]
+
+[tool.ruff.lint.pydocstyle]
+convention = "google"
+
+[tool.ruff.lint.per-file-ignores]
+"tests/**" = ["D", "PLR", "N"]
+"demo/**" = ["D", "PLR"]
+"benchmarks/**" = ["D", "T20"]
+
+# --------------------------------------------------------------------- mypy
+[tool.mypy]
+python_version = "3.10"
+strict = true
+warn_unreachable = true
+files = ["src"]
+
+[[tool.mypy.overrides]]
+module = ["cv2", "cv2.*"]
+ignore_missing_imports = true
+
+# --------------------------------------------------------------------- pytest
+[tool.pytest.ini_options]
+minversion = "8.0"
+testpaths = ["tests", "src/plakakia"]
+addopts = ["-ra", "--strict-markers", "--strict-config", "--doctest-modules", "--import-mode=importlib"]
+filterwarnings = ["error"]
+
+[tool.coverage.run]
+source = ["plakakia"]
+branch = true
+
+[tool.coverage.report]
+show_missing = true
+skip_covered = true
+exclude_also = ["if __name__ == .__main__.:", "if TYPE_CHECKING:"]

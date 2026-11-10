@@ -1,0 +1,65 @@
+site_name: plakakia
+site_description: Fast image tiling for computer vision datasets.
+site_url: https://kalfasyan.github.io/plakakia/
+repo_url: https://github.com/kalfasyan/plakakia
+repo_name: kalfasyan/plakakia
+edit_uri: edit/main/docs/
+
+theme:
+  name: material
+  logo: assets/logo.png
+  favicon: assets/logo.png
+  features:
+    - content.code.copy
+    - navigation.sections
+    - navigation.top
+    - search.suggest
+  palette:
+    - media: "(prefers-color-scheme: light)"
+      scheme: default
+      primary: teal
+      toggle: { icon: material/brightness-7, name: Switch to dark mode }
+    - media: "(prefers-color-scheme: dark)"
+      scheme: slate
+      primary: teal
+      toggle: { icon: material/brightness-4, name: Switch to light mode }
+
+nav:
+  - Home: index.md
+  - Getting started: getting-started.md
+  - Offline tiling (CLI): cli.md
+  - Concepts: concepts.md
+  - API reference:
+      - Tiling: api/tiling.md
+      - Annotations: api/annotations.md
+      - Pipeline & config: api/pipeline.md
+      - Image I/O: api/io.md
+  - Changelog: changelog.md
+  - Contributing: contributing.md
+
+markdown_extensions:
+  - admonition
+  - attr_list
+  - pymdownx.details
+  - pymdownx.highlight
+  - pymdownx.superfences
+  - pymdownx.snippets:
+      base_path: ["."]
+      check_paths: true
+  - toc:
+      permalink: true
+
+plugins:
+  - search
+  - mkdocstrings:
+      handlers:
+        python:
+          paths: [src]
+          options:
+            docstring_style: google
+            show_source: false
+            show_root_heading: true
+            members_order: source
+            separate_signature: true
+            show_signature_annotations: true
+            merge_init_into_class: true

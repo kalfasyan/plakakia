@@ -1,0 +1,27 @@
+name: Release
+
+on:
+  release:
+    types: [published]
+
+permissions:
+  contents: read
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    environment:
+      name: pypi
+      url: https://pypi.org/project/plakakia/
+    permissions:
+      id-token: write  # PyPI trusted publishing, no API token needed
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v5
+      - name: Check the tag matches the package version
+        run: |
+          version=$(uv version --short)
+          [ "v${version}" = "${GITHUB_REF_NAME}" ] || [ "${version}" = "${GITHUB_REF_NAME}" ] \
+            || { echo "Tag ${GITHUB_REF_NAME} does not match version ${version}"; exit 1; }
+      - run: uv build
+      - run: uv publish

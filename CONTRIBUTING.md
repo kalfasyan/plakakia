@@ -1,10 +1,41 @@
-## How to contribute
+# Contributing
 
-At the moment, the project is in its early stages. If you want to contribute, you can do so by:
-- [Opening an issue](https://github.com/kalfasyan/plakakia/issues) to report a bug or request a feature.
-- [Opening a pull request](https://github.com/kalfasyan/plakakia/pulls) to fix a bug or add a feature.
-- [Contacting me](mailto:kalfasyan@gmail.com) to discuss the project.
+Bug reports, feature requests and pull requests are welcome. Please
+[open an issue](https://github.com/kalfasyan/plakakia/issues) first for larger changes.
 
-The response time might be a bit slow depending on my [postdoc duties](https://www.kuleuven.be/wieiswie/en/person/00107087), but I will try to get back to you as soon as possible.  
-  
-My goal is to make this library as useful as possible for the community, while trying to learn new things myself. Note that this is my first open-source "library", so I am still learning how to do things properly. Any feedback is welcome!
+## Development setup
+
+The project is managed with [uv](https://docs.astral.sh/uv/):
+
+```bash
+git clone https://github.com/kalfasyan/plakakia
+cd plakakia
+uv sync                      # creates .venv with the package and all dev tools
+uv run pre-commit install    # lint and format on every commit
+```
+
+## Everyday commands
+
+```bash
+uv run pytest                       # tests (+ doctests)
+uv run pytest --cov                 # with coverage
+uv run ruff check --fix .           # lint
+uv run ruff format .                # format
+uv run mypy                         # type-check (strict)
+uv run mkdocs serve                 # docs at http://127.0.0.1:8000
+uv run python benchmarks/bench_pipeline.py --workers 1 4
+```
+
+## Guidelines
+
+- Keep `plakakia.tiling` pure NumPy (no I/O); file handling belongs in `io`,
+  `annotations` and `pipeline`.
+- Add tests for every behaviour change, and type hints and Google-style docstrings for
+  every public function.
+- Add an entry to `CHANGELOG.md` under *Unreleased*.
+
+## Releasing
+
+1. Bump `version` in `pyproject.toml` (`uv version --bump minor`) and update the changelog.
+2. Create a GitHub release tagged `vX.Y.Z`. The `Release` workflow builds the package and
+   publishes it to PyPI via trusted publishing.

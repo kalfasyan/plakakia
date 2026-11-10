@@ -1,5 +1,5 @@
 [build-system]
-requires = ["hatchling>=1.25"]
+requires = ["hatchling>=1.33.0"]
 build-backend = "hatchling.build"
 
 [project]
@@ -51,7 +51,7 @@ Changelog = "https://github.com/kalfasyan/plakakia/blob/main/CHANGELOG.md"
 [dependency-groups]
 test = ["pytest>=8", "pytest-cov>=5"]
 lint = ["ruff>=0.8", "mypy>=1.13", "types-PyYAML", "types-tqdm", "pre-commit>=4"]
-docs = ["mkdocs-material>=9.5", "mkdocstrings[python]>=0.27"]
+docs = ["mkdocs-material>=9.5", "mkdocstrings[python]>=1.0.6"]
 dev = [
   { include-group = "test" },
   { include-group = "lint" },

@@ -35,6 +35,7 @@ nav:
   - Home: index.md
   - Getting started: getting-started.md
   - How tiling works: concepts.md
+  - Small object detection: small-objects.md
   - Offline tiling (CLI): cli.md
   - Hyperspectral & geospatial: remote-sensing.md
   - API reference:

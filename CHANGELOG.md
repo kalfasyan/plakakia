@@ -7,6 +7,14 @@ All notable changes to this project are documented here. The format follows
 ## [Unreleased]
 
 ### Added
+- `predict_tiled(image, model, tile_size)`: tiled inference in one call for small object
+  detection. It runs any callable model on batches of tiles (NumPy, PyTorch or CuPy, kept
+  on their device), moves boxes to image coordinates, merges duplicates with class-aware
+  NMS and fuses boxes cut by tile borders. Optional full-image pass for large objects.
+- `Detections`, with `to_geojson()` and `map_polygons()`: pass a GeoTIFF's profile to
+  `predict_tiled` to get detections in map coordinates.
+- `tile_batches` (batches of tiles with their coordinates, for any array type) and
+  `merge_detections` (NMS plus seam fusion for boxes you already have).
 - **GPU tiling**: `tile_image`, `tile_array` and `iter_tiles` accept PyTorch tensors and
   CuPy arrays and return tiles on the same device (CUDA, MPS or CPU). Tiles are gathered
   from a zero-copy sliding-window view in one device operation; coordinates stay NumPy.

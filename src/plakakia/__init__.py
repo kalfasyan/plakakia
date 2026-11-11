@@ -14,6 +14,7 @@ from .backend import nms, to_numpy
 from .config import TilingConfig
 from .io import pad_image, read_array, read_image, write_array, write_image
 from .pipeline import Sample, SampleResult, discover_samples, process_sample, run
+from .predict import Detections, merge_detections, predict_tiled, tile_batches
 from .tiling import (
     assign_boxes_to_tiles,
     box_visibility,
@@ -36,6 +37,7 @@ except PackageNotFoundError:  # pragma: no cover - running from a source checkou
 
 __all__ = [
     "Annotations",
+    "Detections",
     "Sample",
     "SampleResult",
     "TilingConfig",
@@ -45,9 +47,11 @@ __all__ = [
     "clip_boxes_to_tile",
     "discover_samples",
     "iter_tiles",
+    "merge_detections",
     "nms",
     "normalize_axes",
     "pad_image",
+    "predict_tiled",
     "process_sample",
     "read_array",
     "read_coco",
@@ -57,6 +61,7 @@ __all__ = [
     "run",
     "select_unique_tiles",
     "tile_array",
+    "tile_batches",
     "tile_coordinates",
     "tile_grid",
     "tile_image",

@@ -22,9 +22,11 @@ tiles along the axes you choose, and carries their labels along: bounding boxes 
 images (aerial, satellite, microscopy, inspection) at full resolution.
 
 <p align="center">
-  <img src="https://raw.githubusercontent.com/kalfasyan/plakakia/main/docs/assets/figures/scene_tiled.jpg" alt="An aerial image cut into 15 overlapping 640x640 tiles" width="720">
-  <br><em>One 2400 × 1500 aerial image with 194 labelled cars, cut into 15 overlapping 640 × 640 tiles.
-  New to tiling? <a href="https://kalfasyan.github.io/plakakia/concepts/">See how it works</a>, with pictures and a playground.</em>
+  <img src="https://raw.githubusercontent.com/kalfasyan/plakakia/main/docs/assets/figures/hero.gif" alt="Animation: a 2400x1500 aerial image with 194 tiny cars. Resized to 640 px the cars become 4x7 pixel smudges. plakakia cuts the image into 15 overlapping full-resolution tiles, a detector runs on each tile, the boxes are moved back to the full image and duplicates in the overlaps are merged: 193 of 194 cars found." width="880">
+  <br><em>Tiny objects vanish when a big image is resized for a detector. plakakia keeps full resolution:
+  tile → detect → merge, with one <code>predict_tiled</code> call.
+  <a href="https://kalfasyan.github.io/plakakia/small-objects/">Small object detection guide</a> ·
+  <a href="https://kalfasyan.github.io/plakakia/concepts/">How tiling works</a></em>
 </p>
 
 - **Fast**: vectorised NumPy tiling and box assignment, plus a multiprocess pipeline.

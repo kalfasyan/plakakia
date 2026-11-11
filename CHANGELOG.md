@@ -10,8 +10,6 @@ All notable changes to this project are documented here. The format follows
 - New **Small object detection** guide (train on tiles, predict on tiles, merge the
   detections with NMS, map them to geographic coordinates) and a small-objects focus on
   the landing page.
-
-### Documentation
 - New visual, beginner-friendly docs: a landing page with a before/after example and a
   "why tile?" comparison, a rewritten **How tiling works** guide with a diagram for every
   concept, an interactive tiling playground, a step-by-step getting-started page and a

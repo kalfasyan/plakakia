@@ -37,7 +37,7 @@ dependencies = [
 [project.optional-dependencies]
 hyperspectral = ["h5py>=3.8", "tifffile>=2023.1"]
 geo = ["rasterio>=1.3.8"]
-demo = ["streamlit>=1.30"]
+demo = ["streamlit>=1.50", "h5py>=3.8", "tifffile>=2023.1"]
 
 [project.scripts]
 plakakia = "plakakia.cli:main"
@@ -90,7 +90,7 @@ convention = "google"
 
 [tool.ruff.lint.per-file-ignores]
 "tests/**" = ["D", "PLR", "N"]
-"demo/**" = ["D", "PLR"]
+"demo/**" = ["D", "PLR", "RUF001"]  # UI text uses typographic symbols (×, –)
 "benchmarks/**" = ["D", "T20"]
 
 # --------------------------------------------------------------------- mypy

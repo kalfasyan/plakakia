@@ -4,6 +4,16 @@ All notable changes to this project are documented here. The format follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and the project uses
 [Semantic Versioning](https://semver.org/).
 
+## [Unreleased]
+
+### Changed
+- Redesigned the Streamlit demo (`demo/app.py`) as the **plakakia playground**: built-in
+  sample drone photo (with labelled boxes) and hyperspectral cube, overlap in percent,
+  a tile inspector, box visibility, band splitting, mean spectra, a tile gallery, a ZIP
+  download (tiles, YOLO labels, positions) and copy-paste Python / CLI code for the
+  current settings. Uploads accept images, `.npy`, HDF5 and multi-band TIFF.
+- The `demo` extra now pulls in `h5py` and `tifffile` and needs Streamlit 1.50+.
+
 ## [1.0.0] - 2026-11-11
 
 The first release since 0.2.1, and the first with a stable, typed public API. It ships

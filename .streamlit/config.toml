@@ -1,0 +1,10 @@
+# Theme of the demo app (`uv run --extra demo streamlit run demo/app.py`).
+[theme]
+primaryColor = "#1f5fd1"
+baseRadius = "medium"
+
+[browser]
+gatherUsageStats = false
+
+[client]
+toolbarMode = "minimal"

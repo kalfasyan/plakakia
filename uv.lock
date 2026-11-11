@@ -2443,8 +2443,12 @@ dependencies = [
 
 [package.optional-dependencies]
 demo = [
+    { name = "h5py" },
     { name = "streamlit", version = "1.65.0", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.11'" },
     { name = "streamlit", version = "1.67.0", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.11'" },
+    { name = "tifffile", version = "2025.5.10", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.11'" },
+    { name = "tifffile", version = "2026.3.3", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version == '3.11.*'" },
+    { name = "tifffile", version = "2026.11.8", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.12'" },
 ]
 geo = [
     { name = "rasterio", version = "1.4.4", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.12'" },
@@ -2505,12 +2509,14 @@ test = [
 
 [package.metadata]
 requires-dist = [
+    { name = "h5py", marker = "extra == 'demo'", specifier = ">=3.8" },
     { name = "h5py", marker = "extra == 'hyperspectral'", specifier = ">=3.8" },
     { name = "numpy", specifier = ">=1.24" },
     { name = "opencv-python-headless", specifier = ">=4.8" },
     { name = "pyyaml", specifier = ">=6.0" },
     { name = "rasterio", marker = "extra == 'geo'", specifier = ">=1.3.8" },
-    { name = "streamlit", marker = "extra == 'demo'", specifier = ">=1.30" },
+    { name = "streamlit", marker = "extra == 'demo'", specifier = ">=1.50" },
+    { name = "tifffile", marker = "extra == 'demo'", specifier = ">=2023.1" },
     { name = "tifffile", marker = "extra == 'hyperspectral'", specifier = ">=2023.1" },
     { name = "tqdm", specifier = ">=4.65" },
 ]

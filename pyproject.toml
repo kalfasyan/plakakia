@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "plakakia"
-version = "0.4.0"
+version = "1.0.0"
 description = "Fast image tiling for computer vision: images, hyperspectral cubes and N-D arrays, with bounding boxes (YOLO, Pascal VOC, COCO) and segmentation masks."
 readme = "README.md"
 license = "GPL-3.0-or-later"
@@ -13,7 +13,7 @@ authors = [{ name = "Ioannis Kalfas", email = "kalfasyan@gmail.com" }]
 requires-python = ">=3.10"
 keywords = ["tiling", "image-tiling", "computer-vision", "hyperspectral", "multispectral", "remote-sensing", "satellite", "drone", "geotiff", "object-detection", "segmentation", "yolo", "coco", "pascal-voc"]
 classifiers = [
-  "Development Status :: 4 - Beta",
+  "Development Status :: 5 - Production/Stable",
   "Intended Audience :: Developers",
   "Intended Audience :: Science/Research",
   "Operating System :: OS Independent",

@@ -92,6 +92,7 @@ convention = "google"
 "tests/**" = ["D", "PLR", "N"]
 "demo/**" = ["D", "PLR", "RUF001"]  # UI text uses typographic symbols (×, –)
 "benchmarks/**" = ["D", "T20"]
+"scripts/**" = ["D", "T20", "PLR"]
 
 # --------------------------------------------------------------------- mypy
 [tool.mypy]

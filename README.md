@@ -21,6 +21,12 @@ tiles along the axes you choose, and carries their labels along: bounding boxes 
 **GeoTIFFs** stay georeferenced, tile by tile. Use it to train and run models on large
 images (aerial, satellite, microscopy, inspection) at full resolution.
 
+<p align="center">
+  <img src="https://raw.githubusercontent.com/kalfasyan/plakakia/main/docs/assets/figures/scene_tiled.jpg" alt="An aerial image cut into 15 overlapping 640x640 tiles" width="720">
+  <br><em>One 2400 × 1500 aerial image with 194 labelled cars, cut into 15 overlapping 640 × 640 tiles.
+  New to tiling? <a href="https://kalfasyan.github.io/plakakia/concepts/">See how it works</a>, with pictures and a playground.</em>
+</p>
+
 - **Fast**: vectorised NumPy tiling and box assignment, plus a multiprocess pipeline.
 - **Small**: four dependencies (`numpy`, `opencv-python-headless`, `pyyaml`, `tqdm`).
 - **Any data**: grayscale, RGB(A), 16-bit, multispectral and hyperspectral cubes
@@ -120,7 +126,7 @@ See the [hyperspectral & geospatial guide](https://kalfasyan.github.io/plakakia/
 uv run --extra demo streamlit run demo/app.py
 ```
 
-<img src="docs/assets/demo.png" alt="Streamlit demo" width="40%"/>
+<img src="docs/assets/demo.png" alt="plakakia playground: the Streamlit demo app" width="80%"/>
 
 ## Features
 

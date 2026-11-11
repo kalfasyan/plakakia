@@ -1,0 +1,23 @@
+<svg class="plk-svg" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 680 185" role="img" aria-label="Offline tiling pipeline">
+<title>Offline tiling pipeline</title>
+<style>
+.fg{fill:var(--md-default-fg-color,#222)}
+.mut{fill:var(--md-default-fg-color--light,#666)}
+.ln{stroke:var(--md-default-fg-color--light,#666);fill:none}
+.bg{fill:var(--md-default-fg-color--lightest,#eee)}
+text{font-family:var(--md-text-font-family,sans-serif);font-size:14px}
+.sm{font-size:12px}.b{font-weight:700}.mono{font-family:var(--md-code-font-family,monospace)}
+</style>
+<defs><marker id="api" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0L10,5L0,10z" style="fill:var(--md-default-fg-color--light,#666)"/></marker></defs>
+<path d="M10,30 h50 l10,-10 h120 v0 l0,0 v10 h0" fill="#2196f3" fill-opacity=".5"/><rect x="10" y="30" width="200" height="132" rx="6" fill="#2196f3" fill-opacity=".15" stroke="#2196f3" stroke-width="2"/><text class="fg b" x="24" y="52">your dataset</text>
+<text class="mut sm mono" x="24" y="76">images/  big.jpg</text>
+<text class="mut sm mono" x="24" y="98">labels/  big.txt</text>
+<text class="mut sm mono" x="24" y="120">(YOLO, VOC, COCO,</text>
+<text class="mut sm mono" x="24" y="142"> or masks)</text>
+<path d="M470,30 h50 l10,-10 h120 v0 l0,0 v10 h0" fill="#009688" fill-opacity=".5"/><rect x="470" y="30" width="200" height="132" rx="6" fill="#009688" fill-opacity=".15" stroke="#009688" stroke-width="2"/><text class="fg b" x="484" y="52">tiled dataset</text>
+<text class="mut sm mono" x="484" y="76">images/  tile_big_*.jpg</text>
+<text class="mut sm mono" x="484" y="98">labels/  tile_big_*.txt</text>
+<text class="mut sm mono" x="484" y="120">boxes shifted and</text>
+<text class="mut sm mono" x="484" y="142">clipped per tile</text>
+<rect x="265" y="50" width="150" height="80" rx="10" fill="#9c27b0" fill-opacity=".18" stroke="#9c27b0" stroke-width="2"/><text class="fg b" x="340" y="84" text-anchor="middle">plakakia</text><text class="mut sm mono" x="340" y="106" text-anchor="middle">config.yaml</text><line class="ln" x1="214" y1="90" x2="260" y2="90" stroke-width="2" marker-end="url(#api)"/><line class="ln" x1="420" y1="90" x2="465" y2="90" stroke-width="2" marker-end="url(#api)"/>
+</svg>

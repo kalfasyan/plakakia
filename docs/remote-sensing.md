@@ -12,6 +12,15 @@ uv add "plakakia[hyperspectral,geo]"   # h5py + tifffile, and rasterio
 
 ## Choosing the axes
 
+A hyperspectral **cube** is a stack of images, one per wavelength (**band**). You decide
+which axes are cut into tiles. Everything else stays whole:
+
+<figure class="plk-fig">
+--8<-- "docs/assets/figures/axes.svg"
+<figcaption>Left: spatial tiles that keep every band. Right: windows cut along the
+bands too, for example 32 bands at a time.</figcaption>
+</figure>
+
 Cubes come in different layouts. Tell plakakia which axes are spatial, and any other
 axes to tile as well:
 

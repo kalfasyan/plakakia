@@ -10,10 +10,12 @@ hide:
 
 # plakakia
 
-<p class="plk-tagline">Cut big images into model-sized tiles, and bring the labels along.<br>
+<p class="plk-tagline">Find small objects in big images. Cut them into model-sized tiles,
+bring the labels along, and put the detections back.<br>
 <em>πλακάκια, Greek for "tiles"</em></p>
 
 [Get started in 5 minutes :material-rocket-launch:](getting-started.md){ .md-button .md-button--primary }
+[Detect small objects :material-magnify-scan:](small-objects.md){ .md-button }
 [See how tiling works :material-grid:](concepts.md){ .md-button }
 
 </div>
@@ -46,10 +48,12 @@ into tile coordinates and clipped at the border.</figcaption>
 </figure>
 </div>
 
-## Why not just resize the image?
+## Made for small objects
 
-Shrinking a 2400-pixel image to 640 pixels makes it 3.75 times smaller. A car that was
-14 pixels wide becomes 4 pixels wide, and there is little left for a model to learn from.
+Insects on a sticky trap, cells under a microscope, cars seen from space: small objects are
+the hardest thing for a detector, and resizing makes them harder. Shrinking a 2400-pixel
+image to a 640-pixel model input makes it 3.75 times smaller. A car that was 14 pixels
+wide becomes 4 pixels wide, and there is little left for a model to learn from.
 Tiling keeps every pixel.
 
 <div class="plk-compare" markdown>
@@ -62,6 +66,9 @@ Tiling keeps every pixel.
 <figcaption>✅ <b>Tiled</b> at native resolution: every detail is kept.</figcaption>
 </figure>
 </div>
+
+Train on tiles, predict on tiles, and merge the detections back onto the full image, with
+any model. [:octicons-arrow-right-24: The small object detection guide](small-objects.md)
 
 ## Three lines of Python
 
@@ -145,9 +152,10 @@ plakakia --config config.yaml
 
 | Field | Typical image | What plakakia does |
 | --- | --- | --- |
+| :material-bug: Insect monitoring | Sticky traps and camera traps, insects of a few pixels | Native-resolution tiles for training and inference |
 | :material-airplane: Drones and aerial survey | 6000 × 4000 photos, tiny objects | Tiles plus YOLO labels for detector training |
 | :material-satellite-variant: Satellite imagery | Multi-band GeoTIFF scenes | Georeferenced tiles, nodata filtering |
-| :material-microscope: Microscopy and pathology | Gigapixel slides, cell masks | Memory-mapped tiling, mask tiles |
+| :material-microscope: Microscopy and pathology | Gigapixel slides, tiny cells | Memory-mapped tiling, box and mask tiles |
 | :material-factory: Industrial inspection | High-resolution line-scan images | Overlapping tiles so no defect is cut in half |
 | :material-flask: Hyperspectral imaging | `(H, W, 224 bands)` cubes | Spatial and spectral windows |
 

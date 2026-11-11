@@ -1,0 +1,3 @@
+# Tiled prediction
+
+::: plakakia.predict

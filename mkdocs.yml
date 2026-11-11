@@ -40,6 +40,7 @@ nav:
   - Hyperspectral & geospatial: remote-sensing.md
   - API reference:
       - Tiling: api/tiling.md
+      - Tiled prediction: api/predict.md
       - Annotations: api/annotations.md
       - Pipeline & config: api/pipeline.md
       - Image I/O: api/io.md

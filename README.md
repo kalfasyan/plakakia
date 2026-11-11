@@ -68,6 +68,22 @@ for t in range(len(tiles)):
     boxes, labels = clip_boxes_to_tile(ann.boxes[idx], coords[t]), ann.labels[idx]
 ```
 
+### Detect small objects on a large image
+
+Run any detector tile by tile and get the boxes back on the full image, duplicates merged
+and objects cut by tile borders put back together:
+
+```python
+from plakakia import predict_tiled
+
+# model(tiles) -> one (boxes, scores, class_ids) per tile, in tile pixels
+dets = predict_tiled(image, model, tile_size=640)
+dets.boxes, dets.scores, dets.class_ids  # on the full image
+```
+
+Pass a GeoTIFF's profile and `dets.to_geojson()` gives polygons on the map. See the
+[small object detection guide](https://kalfasyan.github.io/plakakia/small-objects/).
+
 ### Tile a dataset (offline)
 
 ```bash
@@ -142,6 +158,7 @@ uv run --extra demo streamlit run demo/app.py
 | Partial boxes | `min_visibility` keeps and clips partially visible boxes |
 | Deduplication | `clear_duplicates` keeps the fewest tiles that still contain every box |
 | Background tiles | `save_empty_tiles` |
+| Tiled prediction | `predict_tiled`: batches, any model, class-aware NMS, seam fusion, full-image pass, GeoJSON |
 
 ## Benchmarks
 
@@ -174,7 +191,7 @@ Results from earlier versions on public datasets
 - [x] Rectangular tiles
 - [x] Hyperspectral / multispectral inputs (`.npy`, HDF5, TIFF) tiled along any axes
 - [x] Georeferenced GeoTIFF tiles
-- [ ] Stitching predictions back to full-image coordinates (with NMS)
+- [x] Tiled prediction: merge detections on the full image (NMS + seam fusion, GeoJSON)
 
 ## Contributing
 

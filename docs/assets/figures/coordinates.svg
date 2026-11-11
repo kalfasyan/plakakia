@@ -1,0 +1,21 @@
+<svg class="plk-svg" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 750 320" role="img" aria-label="Tile coordinates">
+<title>Tile coordinates</title>
+<style>
+.fg{fill:var(--md-default-fg-color,#222)}
+.mut{fill:var(--md-default-fg-color--light,#666)}
+.ln{stroke:var(--md-default-fg-color--light,#666);fill:none}
+.bg{fill:var(--md-default-fg-color--lightest,#eee)}
+text{font-family:var(--md-text-font-family,sans-serif);font-size:14px}
+.sm{font-size:12px}.b{font-weight:700}.mono{font-family:var(--md-code-font-family,monospace)}
+</style>
+<defs><marker id="aco" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0L10,5L0,10z" style="fill:var(--md-default-fg-color--light,#666)"/></marker></defs>
+<rect class="bg" x="60" y="40" width="360" height="220" rx="4"/>
+<line class="ln" x1="60" y1="40" x2="450" y2="40" stroke-width="2" marker-end="url(#aco)"/><line class="ln" x1="60" y1="40" x2="60" y2="290" stroke-width="2" marker-end="url(#aco)"/><text class="fg b" x="456" y="45">x</text><text class="fg b" x="55" y="308">y</text><text class="mut sm mono" x="52" y="32" text-anchor="end">(0, 0)</text>
+<rect x="150" y="80" width="150" height="120" rx="2" fill="#009688" fill-opacity=".22" stroke="#009688" stroke-width="3"/><circle cx="150" cy="80" r="5" fill="#009688"/><circle cx="300" cy="200" r="5" fill="#f57c00"/><text class="fg sm mono" x="142" y="70" text-anchor="middle">(x1, y1)</text><text class="fg sm mono" x="308" y="220" text-anchor="middle">(x2, y2)</text><text class="b" x="225.0" y="145.0" text-anchor="middle" fill="#009688">tile</text>
+<text class="fg b" x="490" y="60">One tile = (x1, y1, x2, y2)</text>
+<text class="mut sm" x="490" y="84">Origin at the top-left corner.</text>
+<text class="mut sm" x="490" y="108">x goes right, y goes down.</text>
+<text class="mut sm" x="490" y="132">x2 and y2 are exclusive, just like</text>
+<text class="mut sm" x="490" y="156">NumPy slicing:</text>
+<text class="fg sm mono" x="490" y="180">tile = image[y1:y2, x1:x2]</text>
+</svg>

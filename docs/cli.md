@@ -1,12 +1,40 @@
 # Offline tiling (CLI)
 
-The `plakakia` command tiles a whole dataset (images plus labels or masks) to disk
-using all your CPU cores.
+The `plakakia` command tiles a whole dataset, images plus labels or masks, and writes a
+new dataset of tiles to disk, using all your CPU cores. Use it to prepare training data
+once, before training.
 
-```bash
-plakakia --config config.yaml            # or: python -m plakakia --config ...
-plakakia --config config.yaml -j 8 -q    # 8 workers, no progress bar
+<figure class="plk-fig">
+--8<-- "docs/assets/figures/pipeline.svg"
+</figure>
+
+## In three steps
+
+1. **Organise** your data as one folder of images and one folder of labels, with matching
+   file names (`big.jpg` and `big.txt`). See [input layout](#input-layout).
+2. **Describe** the job in a `config.yaml` file. Start from the
+   [example below](#example-config) and change the paths.
+3. **Run** it:
+
+    ```bash
+    plakakia --config config.yaml            # or: python -m plakakia --config ...
+    plakakia --config config.yaml -j 8 -q    # 8 workers, no progress bar
+    ```
+
+```text
+data/                          output/
+├── images/                    ├── images/
+│   ├── field_01.jpg           │   ├── tile_field_01_0_0_640_640.jpg
+│   └── field_02.jpg    ──►    │   ├── tile_field_01_480_0_1120_640.jpg
+└── labels/                    │   └── ...
+    ├── field_01.txt           └── annotations/
+    └── field_02.txt               ├── tile_field_01_0_0_640_640.txt
+                                   └── ...
 ```
+
+!!! tip "Check the result"
+    Set `draw_boxes: true` on a small subset first: the boxes are drawn on the saved
+    tiles, so you can see at a glance whether the labels landed in the right place.
 
 `make_tiles` is kept as an alias for backwards compatibility.
 

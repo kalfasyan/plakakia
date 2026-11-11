@@ -17,8 +17,8 @@ jobs:
   lint:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: astral-sh/setup-uv@v5
+      - uses: actions/checkout@v7
+      - uses: astral-sh/setup-uv@v7
         with:
           enable-cache: true
       - run: uv sync --locked --group lint
@@ -40,14 +40,14 @@ jobs:
           - os: macos-latest
             python: "3.13"
     steps:
-      - uses: actions/checkout@v4
-      - uses: astral-sh/setup-uv@v5
+      - uses: actions/checkout@v7
+      - uses: astral-sh/setup-uv@v7
         with:
           enable-cache: true
           python-version: ${{ matrix.python }}
       - run: uv sync --locked --group test --no-default-groups
       - run: uv run pytest --cov --cov-report=xml
-      - uses: codecov/codecov-action@v5
+      - uses: codecov/codecov-action@v7
         if: matrix.os == 'ubuntu-latest' && matrix.python == '3.13'
         with:
           files: coverage.xml
@@ -57,8 +57,8 @@ jobs:
     name: test (lowest dependency versions)
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: astral-sh/setup-uv@v5
+      - uses: actions/checkout@v7
+      - uses: astral-sh/setup-uv@v7
         with:
           python-version: "3.10"
       - run: uv run --isolated --resolution lowest-direct --group test --no-default-groups pytest
@@ -66,12 +66,12 @@ jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: astral-sh/setup-uv@v5
+      - uses: actions/checkout@v7
+      - uses: astral-sh/setup-uv@v7
       - run: uv build
       - name: Smoke-test the wheel
         run: uv run --isolated --no-project --with dist/*.whl plakakia --version
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         with:
           name: dist
           path: dist/

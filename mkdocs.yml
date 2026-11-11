@@ -38,11 +38,13 @@ nav:
   - Small object detection: small-objects.md
   - Offline tiling (CLI): cli.md
   - Hyperspectral & geospatial: remote-sensing.md
+  - GPU & NPU acceleration: gpu.md
   - API reference:
       - Tiling: api/tiling.md
       - Annotations: api/annotations.md
       - Pipeline & config: api/pipeline.md
       - Image I/O: api/io.md
+      - Devices & ONNX: api/backend.md
   - Changelog: changelog.md
   - Contributing: contributing.md
 

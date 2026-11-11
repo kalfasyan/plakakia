@@ -10,6 +10,7 @@ from .annotations import (
     write_pascal_voc,
     write_yolo,
 )
+from .backend import nms, to_numpy
 from .config import TilingConfig
 from .io import pad_image, read_array, read_image, write_array, write_image
 from .pipeline import Sample, SampleResult, discover_samples, process_sample, run
@@ -44,6 +45,7 @@ __all__ = [
     "clip_boxes_to_tile",
     "discover_samples",
     "iter_tiles",
+    "nms",
     "normalize_axes",
     "pad_image",
     "process_sample",
@@ -59,6 +61,7 @@ __all__ = [
     "tile_grid",
     "tile_image",
     "tile_starts",
+    "to_numpy",
     "window_slices",
     "write_array",
     "write_image",

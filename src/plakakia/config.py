@@ -5,7 +5,7 @@ from __future__ import annotations
 import dataclasses
 import os
 import warnings
-from collections.abc import Mapping
+from collections.abc import Mapping, Sequence
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any, Literal, get_args
@@ -40,6 +40,10 @@ def _normalize_ext(ext: str) -> str:
     return ext.strip().lstrip(".").lower()
 
 
+def _per_axis(value: int | Sequence[int], n: int) -> tuple[int, ...]:
+    return (int(value),) * n if isinstance(value, int) else tuple(int(v) for v in value)
+
+
 @dataclass(frozen=True)
 class TilingConfig:
     """Settings for :func:`plakakia.pipeline.run`.
@@ -58,18 +62,46 @@ class TilingConfig:
     """Directory where annotation (or mask) tiles are written."""
 
     input_format_annotations: InputFormat = "yolo"
-    """One of ``yolo``, ``pascal_voc``, ``coco``, ``segmentation`` (PNG masks) or ``none``."""
+    """One of ``yolo``, ``pascal_voc``, ``coco``, ``segmentation`` (masks) or ``none``."""
     output_format_annotations: OutputFormat = "yolo"
     """One of ``yolo`` or ``pascal_voc``. Ignored for ``segmentation`` and ``none``."""
     input_extension_images: str = "jpg"
-    """Extension of the input images (``jpg``, ``png``, ``tif``, ...)."""
+    """Extension of the input images: ``jpg``, ``png``, ``tif``, or ``npy`` / ``h5`` for
+    N-D arrays such as hyperspectral cubes."""
     output_extension_images: str = "jpg"
-    """Extension (and therefore encoding) of the image tiles."""
+    """Extension (and therefore encoding) of the image tiles. Use ``npy``, ``h5`` or ``tif``
+    for data OpenCV cannot encode (many bands, floats)."""
+    mask_extension: str = "png"
+    """Extension of segmentation masks (``png``, ``npy``, ``tif``...). Mask tiles keep this
+    format (JPEG masks are written as PNG)."""
+    hdf5_dataset: str | None = None
+    """Name of the dataset to read from (and write to) HDF5 files. Optional when each
+    input file holds a single dataset."""
 
-    tile_size: int = 200
-    """Side of the square tiles, in pixels."""
-    step_size: int = 50
-    """Stride of the sliding window, in pixels."""
+    georeference: bool = False
+    """Read inputs as GeoTIFFs with ``rasterio`` (``plakakia[geo]``) and write every tile as
+    a GeoTIFF with its own affine transform, CRS and nodata value, so tiles stay on the
+    map. Rasterio arrays are ``(bands, height, width)``: use ``axes: [1, 2]``."""
+    bands: Sequence[int] | None = None
+    """Keep only these indices along ``band_axis`` before tiling, e.g. ``[3, 2, 1]`` to
+    build an RGB composite from Sentinel-2 bands. ``None`` keeps every band."""
+    band_axis: int = -1
+    """Axis that ``bands`` selects from (``0`` for channels-first / GeoTIFF data)."""
+    nodata: float | None = None
+    """Pixel value meaning "no data" (``nan`` allowed). A pixel is nodata when all of its
+    bands equal it. Defaults to the GeoTIFF's own nodata value when ``georeference`` is set."""
+    max_nodata_fraction: float = 1.0
+    """Skip tiles with a larger fraction of nodata pixels, e.g. ``0.5`` to drop tiles that are
+    mostly outside a drone orthomosaic or satellite swath. ``1.0`` keeps every tile."""
+
+    axes: Sequence[int] = (0, 1)
+    """Array axes to tile. The first two are the ``(y, x)`` axes that boxes and masks refer
+    to, e.g. ``[1, 2]`` for channels-first ``(B, H, W)`` cubes. Add more axes to tile them
+    too, e.g. ``[0, 1, 2]`` to also split the bands of a ``(H, W, B)`` cube."""
+    tile_size: int | Sequence[int] = 200
+    """Tile size in pixels: one value for every tiled axis, or one per entry of ``axes``."""
+    step_size: int | Sequence[int] = 50
+    """Stride of the sliding window: one value, or one per entry of ``axes``."""
     cover_edges: bool = False
     """Add border-aligned tiles so the whole image is covered."""
     pad_image: bool = False
@@ -100,7 +132,20 @@ class TilingConfig:
             set_(self, "input_dir_annotations", Path(self.input_dir_annotations))
         set_(self, "input_extension_images", _normalize_ext(self.input_extension_images))
         set_(self, "output_extension_images", _normalize_ext(self.output_extension_images))
+        set_(self, "mask_extension", _normalize_ext(self.mask_extension))
         set_(self, "annotation_mapping", dict(self.annotation_mapping or {}))
+        set_(self, "axes", tuple(int(a) for a in self.axes))
+        n = len(self.axes)
+        if n < 2 or len(set(self.axes)) != n:
+            raise ValueError(f"axes must list at least two distinct axes, got {list(self.axes)}.")
+        for name in ("tile_size", "step_size"):
+            value = getattr(self, name)
+            values = (int(value),) * n if isinstance(value, int) else tuple(int(v) for v in value)
+            if len(values) != n:
+                raise ValueError(f"{name} needs one value or {n} values (one per axis).")
+            if any(v <= 0 for v in values):
+                raise ValueError("tile_size and step_size must be positive.")
+            set_(self, name, value if isinstance(value, int) else values)
         if self.num_workers in (-1, 0):
             set_(self, "num_workers", os.cpu_count() or 1)
 
@@ -116,8 +161,26 @@ class TilingConfig:
             )
         if self.input_format_annotations != "none" and self.input_dir_annotations is None:
             raise ValueError("input_dir_annotations is required unless input_format is 'none'.")
-        if self.tile_size <= 0 or self.step_size <= 0:
-            raise ValueError("tile_size and step_size must be positive.")
+        if self.bands is not None:
+            set_(self, "bands", tuple(int(b) for b in self.bands))
+            if not self.bands:
+                raise ValueError("bands must not be empty.")
+        if self.nodata is not None:
+            set_(self, "nodata", float(self.nodata))
+        if not 0.0 <= self.max_nodata_fraction <= 1.0:
+            raise ValueError("max_nodata_fraction must be in [0, 1].")
+        if self.max_nodata_fraction < 1.0 and self.nodata is None and not self.georeference:
+            raise ValueError("max_nodata_fraction needs a `nodata` value (or georeference).")
+        if self.georeference:
+            if tuple(self.axes[:2]) != (1, 2):
+                raise ValueError(
+                    "georeference reads (bands, height, width) arrays: set axes to [1, 2] "
+                    "(optionally followed by 0 to tile the bands too)."
+                )
+            if self.output_extension_images not in {"tif", "tiff"}:
+                raise ValueError("georeference requires output_extension_images: tif.")
+        if self.draw_boxes and self.axes != (0, 1):
+            raise ValueError("draw_boxes is only supported for images tiled with axes [0, 1].")
         if self.pad_size < 0:
             raise ValueError("pad_size must be non-negative.")
         if not 0.0 < self.min_visibility <= 1.0:
@@ -126,10 +189,21 @@ class TilingConfig:
             raise ValueError("num_workers must be >= 1 (or -1 for all cores).")
 
     @property
+    def tile_shape(self) -> tuple[int, ...]:
+        """Tile size for each entry of :attr:`axes`."""
+        return _per_axis(self.tile_size, len(self.axes))
+
+    @property
+    def step_shape(self) -> tuple[int, ...]:
+        """Step size for each entry of :attr:`axes`."""
+        return _per_axis(self.step_size, len(self.axes))
+
+    @property
     def output_extension_annotations(self) -> str:
         """File extension of the written annotation tiles."""
         if self.input_format_annotations == "segmentation":
-            return "png"
+            # Lossy formats would corrupt class ids.
+            return "png" if self.mask_extension in {"jpg", "jpeg"} else self.mask_extension
         return ANNOTATION_EXTENSIONS[self.output_format_annotations]
 
     @property

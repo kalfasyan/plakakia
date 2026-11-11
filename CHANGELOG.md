@@ -4,7 +4,34 @@ All notable changes to this project are documented here. The format follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and the project uses
 [Semantic Versioning](https://semver.org/).
 
-## [0.3.0] - Unreleased
+## [0.4.0] - Unreleased
+
+Hyperspectral, multispectral and geospatial (satellite / drone) data.
+
+### Added
+- `tile_array`: tile N-D arrays along **any** axes, with a tile size and stride per axis
+  (e.g. spatial and spectral windows of a hyperspectral cube). Non-tiled axes are kept in
+  place.
+- `iter_tiles`: zero-copy, lazy tiling for larger-than-memory (memory-mapped) data.
+- `tile_grid`, `window_slices`, `normalize_axes` helpers.
+- `tile_image` and `tile_coordinates` accept rectangular tiles (`(height, width)`) and
+  `tile_image` takes `axes=` for channels-first data.
+- `read_array` / `write_array`: `.npy` (memory-mapped), HDF5 (`hdf5_dataset` selects the
+  dataset, files are always closed) and multi-band TIFF.
+- GeoTIFF support (`plakakia[geo]`): `read_geotiff`, `write_geotiff`, `GeoProfile`. With
+  `georeference: true` every tile keeps the CRS, nodata and its own affine transform.
+- Pipeline options: `axes`, per-axis `tile_size`/`step_size`, `bands`/`band_axis`,
+  `nodata`, `max_nodata_fraction` (vectorised summed-area table), `hdf5_dataset`,
+  `mask_extension`.
+- Optional extras `hyperspectral` (h5py, tifffile) and `geo` (rasterio).
+- Docs page on hyperspectral and geospatial data, plus example configs.
+
+### Changed
+- `pad_image` takes `axes=`.
+- Segmentation masks keep their format (`png`, `npy`, `tif`...) instead of always PNG;
+  JPEG masks are still written as PNG.
+
+## [0.3.0]
 
 A ground-up modernisation of the code base. The YAML config keys and the output file
 naming are backwards compatible; the Python API is new.

@@ -15,14 +15,16 @@
   <a href="LICENSE"><img src="https://img.shields.io/github/license/kalfasyan/plakakia" alt="License"></a>
 </p>
 
-**plakakia** splits images into (overlapping) square tiles and carries their labels along:
-bounding boxes in **YOLO**, **Pascal VOC** or **COCO** format, or **segmentation masks**.
-Use it to train and run detectors on large images (aerial, satellite, microscopy, inspection)
-at full resolution.
+**plakakia** splits images, **hyperspectral cubes** and any N-D array into (overlapping)
+tiles along the axes you choose, and carries their labels along: bounding boxes in **YOLO**,
+**Pascal VOC** or **COCO** format, or **segmentation masks**. Satellite and drone
+**GeoTIFFs** stay georeferenced, tile by tile. Use it to train and run models on large
+images (aerial, satellite, microscopy, inspection) at full resolution.
 
 - **Fast**: vectorised NumPy tiling and box assignment, plus a multiprocess pipeline.
 - **Small**: four dependencies (`numpy`, `opencv-python-headless`, `pyyaml`, `tqdm`).
-- **Any image**: grayscale, RGB(A), 16-bit, or arrays with any number of channels.
+- **Any data**: grayscale, RGB(A), 16-bit, multispectral and hyperspectral cubes
+  (`.npy`, HDF5, TIFF, GeoTIFF), channels-first or last, tiled along any axes.
 - **Typed and tested**: strict mypy, full test suite on Linux, macOS and Windows.
 
 ## Installation
@@ -87,6 +89,31 @@ from plakakia import TilingConfig, run
 results = run(TilingConfig.from_yaml("config.yaml"))
 ```
 
+### Hyperspectral and satellite data
+
+```python
+import numpy as np
+from plakakia import tile_array
+
+cube = np.load("scene.npy", mmap_mode="r")  # (bands, H, W), read lazily
+tiles, starts = tile_array(cube, (256, 256, 32), (192, 192, 16), axes=(1, 2, 0))
+# tiles: (T, 32, 256, 256) spatial x spectral windows; starts: (y, x, band) per tile
+```
+
+```yaml
+georeference: true          # each GeoTIFF tile keeps its CRS and its own transform
+axes: [1, 2]                # rasterio arrays are (bands, height, width)
+bands: [3, 2, 1, 7]         # pick bands before tiling
+band_axis: 0
+max_nodata_fraction: 0.5    # skip tiles that are mostly outside the swath
+```
+
+```bash
+uv add "plakakia[hyperspectral,geo]"   # h5py + tifffile, rasterio
+```
+
+See the [hyperspectral & geospatial guide](https://kalfasyan.github.io/plakakia/remote-sensing/).
+
 ### Demo app
 
 ```bash
@@ -99,7 +126,10 @@ uv run --extra demo streamlit run demo/app.py
 
 | | |
 | --- | --- |
-| Input labels | YOLO (boxes and polygons), Pascal VOC, COCO, PNG masks, or none |
+| Input data | JPEG/PNG/..., `.npy` (memory-mapped), HDF5, multi-band TIFF, GeoTIFF |
+| Axes | any axes, per-axis tile size and stride, rectangular tiles |
+| Geospatial | per-tile CRS and transform, nodata filtering, band selection |
+| Input labels | YOLO (boxes and polygons), Pascal VOC, COCO, masks, or none |
 | Output labels | YOLO, Pascal VOC, PNG mask tiles |
 | Overlap | any `step_size` ≤ or > `tile_size` |
 | Edge handling | `cover_edges` adds border-aligned tiles; `pad_image` pads first |
@@ -135,8 +165,9 @@ Results from earlier versions on public datasets
 - [x] Partially visible boxes (`min_visibility`)
 - [x] Full image coverage (`cover_edges`)
 - [ ] COCO output
-- [ ] Rectangular tiles
-- [ ] Multi-channel (e.g. hyperspectral, `.npy`/HDF5) inputs in the offline pipeline
+- [x] Rectangular tiles
+- [x] Hyperspectral / multispectral inputs (`.npy`, HDF5, TIFF) tiled along any axes
+- [x] Georeferenced GeoTIFF tiles
 - [ ] Stitching predictions back to full-image coordinates (with NMS)
 
 ## Contributing

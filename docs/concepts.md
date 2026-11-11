@@ -5,6 +5,15 @@
 Boxes and tiles are `(x1, y1, x2, y2)` in pixels with **exclusive** `x2`/`y2`, i.e.
 exactly NumPy slicing: `image[y1:y2, x1:x2]`. Tiles are ordered row-major.
 
+## Axes
+
+Arrays can have any number of dimensions. [`tile_array`][plakakia.tiling.tile_array]
+tiles any subset of axes, with a tile size and stride per axis, and leaves the other axes
+whole and in place, so `tiles[i] == array[window_slices(starts[i], ...)]`.
+[`tile_image`][plakakia.tiling.tile_image] is the 2-D case: it tiles the `(y, x)` axes
+(`axes=(0, 1)` by default, `(1, 2)` for channels-first data) and returns box-style
+coordinates. The axis can be chosen everywhere, and no axis is assumed to hold bands.
+
 ## The tiling grid
 
 Along each axis, tiles start at `0, step, 2*step, ...` as long as they fit. When

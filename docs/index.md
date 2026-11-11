@@ -12,8 +12,10 @@ It is the preprocessing step you need for training detectors on large images
 - **Fast**: vectorised NumPy tiling (`sliding_window_view`, one gather per image),
   vectorised box-to-tile assignment, and a multiprocess pipeline.
 - **Small**: only `numpy`, `opencv-python-headless`, `pyyaml` and `tqdm`.
-- **Any image**: grayscale, RGB, RGBA, 16-bit, or `(H, W, C)` arrays with any number of
-  channels (e.g. hyperspectral cubes).
+- **Any data, any axes**: grayscale, RGB(A), 16-bit, multispectral and hyperspectral
+  cubes (`.npy`, HDF5, TIFF), channels-first or last, tiled along the axes you choose.
+- **Geospatial**: satellite and drone GeoTIFF tiles keep their CRS and transform, and
+  mostly-empty tiles can be skipped. See [Hyperspectral & geospatial](remote-sensing.md).
 - **Typed and tested**: fully type-annotated (`py.typed`) and tested on Linux, macOS and
   Windows.
 

@@ -81,3 +81,26 @@ def test_example_config_loads() -> None:
     example = Path(__file__).parents[1] / "examples" / "config.yaml"
     cfg = TilingConfig.from_yaml(example)
     assert cfg.tile_size > 0
+
+
+def test_axes_and_per_axis_sizes(tmp_path: Path) -> None:
+    base = {"input_dir_images": tmp_path, "input_format_annotations": "none"}
+    cfg = TilingConfig(**base, axes=[1, 2, 0], tile_size=[64, 64, 10], step_size=32)  # type: ignore[arg-type]
+    assert cfg.axes == (1, 2, 0)
+    assert cfg.tile_shape == (64, 64, 10)
+    assert cfg.step_shape == (32, 32, 32)
+    with pytest.raises(ValueError, match="one value or 3 values"):
+        TilingConfig(**base, axes=[1, 2, 0], tile_size=[64, 64])  # type: ignore[arg-type]
+    with pytest.raises(ValueError, match="at least two distinct axes"):
+        TilingConfig(**base, axes=[1, 1])  # type: ignore[arg-type]
+    with pytest.raises(ValueError, match="draw_boxes"):
+        TilingConfig(**base, axes=[1, 2], draw_boxes=True)  # type: ignore[arg-type]
+    with pytest.raises(ValueError, match="bands must not be empty"):
+        TilingConfig(**base, bands=[])  # type: ignore[arg-type]
+    seg = TilingConfig(
+        **base | {"input_format_annotations": "segmentation"},
+        input_dir_annotations=tmp_path,
+        mask_extension="npy",
+    )  # type: ignore[arg-type]
+    assert seg.output_extension_annotations == "npy"
+    assert seg.replace(mask_extension="jpg").output_extension_annotations == "png"

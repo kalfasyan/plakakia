@@ -1,0 +1,20 @@
+# Tile multispectral satellite / drone GeoTIFFs and keep each tile georeferenced.
+# Requires `plakakia[geo]` (rasterio).
+input_dir_images: data/scenes
+input_extension_images: tif
+input_format_annotations: none   # or yolo / pascal_voc / coco / segmentation
+output_dir_images: output/tiles
+output_extension_images: tif
+
+georeference: true    # write tiles with their own transform, CRS and nodata
+axes: [1, 2]          # rasterio arrays are (bands, height, width)
+tile_size: 512
+step_size: 448
+cover_edges: true
+
+bands: [3, 2, 1, 7]   # e.g. Sentinel-2 B4, B3, B2, B8 (0-based indices)
+band_axis: 0
+max_nodata_fraction: 0.5   # skip tiles that are mostly outside the swath
+# nodata: 0                # defaults to the GeoTIFF's own nodata value
+
+num_workers: -1

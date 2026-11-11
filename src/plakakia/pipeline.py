@@ -22,10 +22,25 @@ from .annotations import (
     write_yolo,
 )
 from .config import ANNOTATION_EXTENSIONS, TilingConfig
-from .io import pad_image, read_image, write_image
-from .tiling import assign_boxes_to_tiles, clip_boxes_to_tile, select_unique_tiles, tile_coordinates
+from .io import GeoProfile, pad_image, read_array, read_geotiff, write_array, write_geotiff
+from .tiling import (
+    assign_boxes_to_tiles,
+    clip_boxes_to_tile,
+    normalize_axes,
+    select_unique_tiles,
+    tile_coordinates,
+    tile_grid,
+    window_slices,
+)
 
-__all__ = ["Sample", "SampleResult", "discover_samples", "process_sample", "run"]
+__all__ = [
+    "Sample",
+    "SampleResult",
+    "discover_samples",
+    "nodata_fraction",
+    "process_sample",
+    "run",
+]
 
 logger = logging.getLogger(__name__)
 
@@ -92,7 +107,7 @@ def discover_samples(config: TilingConfig) -> list[Sample]:
             logger.warning("%d images are not listed in %s.", len(unlisted), json_path.name)
         return [Sample(p, annotations=coco.get(p.name, Annotations.empty())) for p in images]
 
-    ext = ANNOTATION_EXTENSIONS[fmt]
+    ext = config.mask_extension if fmt == "segmentation" else ANNOTATION_EXTENSIONS[fmt]
     samples = [Sample(p, ann_dir / f"{p.stem}.{ext}") for p in images]
     missing = [s for s in samples if s.annotation_path and not s.annotation_path.is_file()]
     if fmt == "segmentation" and missing:
@@ -135,56 +150,142 @@ def _tile_name(prefix: str, stem: str, coord: np.ndarray) -> str:
     return f"{prefix}_{stem}_{x1}_{y1}_{x2}_{y2}"
 
 
+def nodata_fraction(
+    image: np.ndarray,
+    nodata: float,
+    coords: np.ndarray,
+    spatial_axes: tuple[int, int] = (0, 1),
+) -> np.ndarray:
+    """Fraction of nodata pixels in each tile, via a summed-area table (O(H*W + T)).
+
+    A pixel is nodata when every value along the non-spatial axes equals ``nodata``
+    (``nan`` matches NaN).
+
+    Args:
+        image: Array with spatial axes ``spatial_axes`` (``(y, x)``).
+        nodata: The nodata value.
+        coords: ``(T, 4)`` tile coordinates ``(x1, y1, x2, y2)``.
+        spatial_axes: The ``(y, x)`` axes of ``image``.
+
+    Returns:
+        ``(T,)`` array of fractions in ``[0, 1]``.
+    """
+    y_axis, x_axis = spatial_axes
+    invalid = np.isnan(image) if np.isnan(nodata) else image == nodata
+    other = tuple(d for d in range(image.ndim) if d not in spatial_axes)
+    if other:
+        invalid = invalid.all(axis=other)
+    if y_axis > x_axis:  # the reduction keeps the remaining axes in ascending order
+        invalid = invalid.T
+    sat = np.zeros((invalid.shape[0] + 1, invalid.shape[1] + 1), dtype=np.int64)
+    sat[1:, 1:] = invalid.cumsum(axis=0).cumsum(axis=1)
+    x1, y1, x2, y2 = np.asarray(coords).T
+    counts = sat[y2, x2] - sat[y1, x2] - sat[y2, x1] + sat[y1, x1]
+    return np.asarray(counts / ((y2 - y1) * (x2 - x1)), dtype=np.float64)
+
+
+def _extra_suffix(axes: tuple[int, ...], starts: list[int], sizes: tuple[int, ...]) -> str:
+    return "".join(f"_ax{a}-{s}-{s + t}" for a, s, t in zip(axes, starts, sizes, strict=True))
+
+
 def process_sample(sample: Sample, config: TilingConfig) -> SampleResult:
-    """Tile one image (and its labels or mask) and write the results to disk."""
-    image = read_image(sample.image_path)
-    height, width = image.shape[:2]
+    """Tile one image or N-D array (and its labels or mask) and write the results to disk.
+
+    The first two entries of ``config.axes`` are the ``(y, x)`` axes that labels refer to;
+    any further axes (e.g. spectral bands) are tiled as well, producing one output file per
+    combination of spatial and extra window. Those files share the spatial tile's labels.
+    """
+    profile: GeoProfile | None = None
+    if config.georeference:
+        image, profile = read_geotiff(sample.image_path)
+    else:
+        image = read_array(sample.image_path, hdf5_dataset=config.hdf5_dataset)
+    if config.bands is not None:
+        image = np.take(image, config.bands, axis=config.band_axis)
+    axes = normalize_axes(config.axes, image.ndim)
+    y_axis, x_axis = axes[:2]
+    extra_axes = axes[2:]
+    sizes, steps = config.tile_shape, config.step_shape
+    height, width = image.shape[y_axis], image.shape[x_axis]
     fmt = config.input_format_annotations
     stem = sample.image_path.stem
     pad = config.pad_size if config.pad_image else 0
     img_ext = config.output_extension_images
 
     if pad:
-        image = pad_image(image, pad)
+        image = pad_image(image, pad, axes=(y_axis, x_axis))
     coords = tile_coordinates(
-        image.shape[0],
-        image.shape[1],
-        config.tile_size,
-        config.step_size,
+        image.shape[y_axis],
+        image.shape[x_axis],
+        sizes[:2],
+        steps[:2],
         cover_edges=config.cover_edges,
     )
-    if len(coords) == 0:
-        reason = f"image {width}x{height} is smaller than tile_size={config.tile_size}"
+    extra_starts = tile_grid(
+        [image.shape[a] for a in extra_axes], sizes[2:], steps[2:], cover_edges=config.cover_edges
+    ).tolist()
+    if len(coords) == 0 or not extra_starts:
+        reason = f"shape {image.shape} is smaller than tile {sizes} along axes {list(axes)}"
         logger.warning("Skipping %s: %s.", sample.image_path.name, reason)
         return SampleResult(sample.image_path, skipped=reason)
 
-    def save_tile(index: int, data: np.ndarray | None = None) -> str:
-        x1, y1, x2, y2 = coords[index].tolist()
-        name = _tile_name("tile", stem, coords[index])
-        tile = image[y1:y2, x1:x2] if data is None else data
-        write_image(config.output_dir_images / f"{name}.{img_ext}", tile)
-        return name
+    nodata = config.nodata
+    if nodata is None and profile is not None:
+        nodata = profile.nodata
+    usable = np.ones(len(coords), dtype=bool)
+    if config.max_nodata_fraction < 1.0:
+        if nodata is None:
+            logger.warning("%s has no nodata value; not filtering.", sample.image_path.name)
+        else:
+            frac = nodata_fraction(image, float(nodata), coords, (y_axis, x_axis))
+            usable = frac <= config.max_nodata_fraction
+
+    def write(path: Path, data: np.ndarray, x1: int, y1: int) -> None:
+        if profile is not None and path.suffix.lower() in {".tif", ".tiff"}:
+            write_geotiff(path, data, profile.for_window(x1 - pad, y1 - pad))
+        else:
+            write_array(path, data, hdf5_dataset=config.hdf5_dataset)
+
+    # (height, width, depth) of an output tile, for the Pascal VOC <size> tag.
+    depth = 1
+    for d in range(image.ndim):
+        if d not in (y_axis, x_axis):
+            depth *= sizes[axes.index(d)] if d in extra_axes else image.shape[d]
+    tile_shape_hw = (sizes[0], sizes[1]) if image.ndim == 2 else (sizes[0], sizes[1], depth)
+
+    def save_tiles(index: int, drawn: np.ndarray | None = None) -> str:
+        """Write every extra-axis window of spatial tile ``index``; return its base name."""
+        x1, y1, _, _ = coords[index].tolist()
+        base = _tile_name("tile", stem, coords[index])
+        for extra in extra_starts:
+            name = base + _extra_suffix(extra_axes, extra, sizes[2:])
+            data = drawn
+            if data is None:
+                data = image[window_slices((y1, x1, *extra), sizes, axes, image.ndim)]
+            write(config.output_dir_images / f"{name}.{img_ext}", data, x1, y1)
+        return base
 
     if fmt == "none":
-        for i in range(len(coords)):
-            save_tile(i)
-        return SampleResult(sample.image_path, num_tiles=len(coords))
+        for i in np.flatnonzero(usable).tolist():
+            save_tiles(i)
+        return SampleResult(sample.image_path, num_tiles=int(usable.sum()) * len(extra_starts))
 
     if fmt == "segmentation":
         assert sample.annotation_path is not None
-        mask = read_image(sample.annotation_path)
+        mask = read_array(sample.annotation_path, hdf5_dataset=config.hdf5_dataset)
         if mask.shape[:2] != (height, width):
             raise ValueError(
                 f"Mask {sample.annotation_path} has size {mask.shape[:2]}, "
                 f"image has {(height, width)}."
             )
         mask = pad_image(mask, pad)
-        for i, (x1, y1, x2, y2) in enumerate(coords.tolist()):
-            save_tile(i)
+        mask_ext = config.output_extension_annotations
+        for i in np.flatnonzero(usable).tolist():
+            x1, y1, x2, y2 = coords[i].tolist()
+            save_tiles(i)
             name = _tile_name("mask", stem, coords[i])
-            # Masks are always PNG: lossy formats would corrupt class ids.
-            write_image(config.output_dir_annotations / f"{name}.png", mask[y1:y2, x1:x2])
-        return SampleResult(sample.image_path, num_tiles=len(coords))
+            write(config.output_dir_annotations / f"{name}.{mask_ext}", mask[y1:y2, x1:x2], x1, y1)
+        return SampleResult(sample.image_path, num_tiles=int(usable.sum()) * len(extra_starts))
 
     # Object detection.
     ann = _load_annotations(sample, config, height, width)
@@ -195,21 +296,31 @@ def process_sample(sample: Sample, config: TilingConfig) -> SampleResult:
     keep = select_unique_tiles(assignment) if config.clear_duplicates else has_boxes
     if config.save_empty_tiles:
         keep = keep | ~has_boxes
+    keep &= usable
 
     num_boxes: int = 0
     for t in np.flatnonzero(keep).tolist():
         idx = np.flatnonzero(assignment[t])
         local = Annotations(clip_boxes_to_tile(ann.boxes[idx], coords[t]), ann.labels[idx])
-        num_boxes += len(local)
-        x1, y1, x2, y2 = coords[t].tolist()
-        tile = image[y1:y2, x1:x2]
-        name = save_tile(t, _draw(tile, local) if config.draw_boxes else None)
-        ann_path = config.output_dir_annotations / f"{name}.{config.output_extension_annotations}"
-        if config.output_format_annotations == "yolo":
-            write_yolo(ann_path, local, tile.shape[:2])
-        else:
-            write_pascal_voc(ann_path, local, tile.shape, f"{name}.{img_ext}", config.label_names)
-    return SampleResult(sample.image_path, num_tiles=int(keep.sum()), num_boxes=num_boxes)
+        num_boxes += len(local) * len(extra_starts)
+        drawn = None
+        if config.draw_boxes:
+            x1, y1, x2, y2 = coords[t].tolist()
+            drawn = _draw(image[y1:y2, x1:x2], local)
+        base = save_tiles(t, drawn)
+        for extra in extra_starts:
+            name = base + _extra_suffix(extra_axes, extra, sizes[2:])
+            ann_path = (
+                config.output_dir_annotations / f"{name}.{config.output_extension_annotations}"
+            )
+            if config.output_format_annotations == "yolo":
+                write_yolo(ann_path, local, (sizes[0], sizes[1]))
+            else:
+                write_pascal_voc(
+                    ann_path, local, tile_shape_hw, f"{name}.{img_ext}", config.label_names
+                )
+    n_tiles = int(keep.sum()) * len(extra_starts)
+    return SampleResult(sample.image_path, num_tiles=n_tiles, num_boxes=num_boxes)
 
 
 # --------------------------------------------------------------------------- runner

@@ -29,6 +29,7 @@ nav:
   - Getting started: getting-started.md
   - Offline tiling (CLI): cli.md
   - Concepts: concepts.md
+  - Hyperspectral & geospatial: remote-sensing.md
   - API reference:
       - Tiling: api/tiling.md
       - Annotations: api/annotations.md

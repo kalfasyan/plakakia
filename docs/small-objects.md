@@ -20,6 +20,8 @@ The fix is to **never shrink the image**: train on tiles, run the model on tiles
 the detections back on the full image. plakakia does every step, with any model:
 training tiles come from one command, and prediction plus merging is one function call.
 
+![Animation: the image is cut into overlapping tiles, a detector runs on each tile, and the boxes are merged on the full image](assets/figures/hero.gif){ .plk-rounded }
+
 ```text
 1. Train     big images + labels ──► plakakia ──► tiles + labels ──► train
 2. Predict   big image ──► predict_tiled(image, model) ──► boxes on the full image

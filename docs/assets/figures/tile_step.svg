@@ -1,0 +1,53 @@
+<svg class="plk-svg" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 598 258" role="img" aria-label="Tile size and step size">
+<title>Tile size and step size</title>
+<style>
+.fg{fill:var(--md-default-fg-color,#222)}
+.mut{fill:var(--md-default-fg-color--light,#666)}
+.ln{stroke:var(--md-default-fg-color--light,#666);fill:none}
+.bg{fill:var(--md-default-fg-color--lightest,#eee)}
+text{font-family:var(--md-text-font-family,sans-serif);font-size:14px}
+.sm{font-size:12px}.b{font-weight:700}.mono{font-family:var(--md-code-font-family,monospace)}
+</style>
+<defs><marker id="ats" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0L10,5L0,10z" style="fill:var(--md-default-fg-color--light,#666)"/></marker></defs>
+<rect class="bg" x="30" y="70" width="308" height="154" rx="4"/>
+<line class="ln" stroke-opacity=".25" x1="30" y1="70" x2="30" y2="224"/>
+<line class="ln" stroke-opacity=".25" x1="52" y1="70" x2="52" y2="224"/>
+<line class="ln" stroke-opacity=".25" x1="74" y1="70" x2="74" y2="224"/>
+<line class="ln" stroke-opacity=".25" x1="96" y1="70" x2="96" y2="224"/>
+<line class="ln" stroke-opacity=".25" x1="118" y1="70" x2="118" y2="224"/>
+<line class="ln" stroke-opacity=".25" x1="140" y1="70" x2="140" y2="224"/>
+<line class="ln" stroke-opacity=".25" x1="162" y1="70" x2="162" y2="224"/>
+<line class="ln" stroke-opacity=".25" x1="184" y1="70" x2="184" y2="224"/>
+<line class="ln" stroke-opacity=".25" x1="206" y1="70" x2="206" y2="224"/>
+<line class="ln" stroke-opacity=".25" x1="228" y1="70" x2="228" y2="224"/>
+<line class="ln" stroke-opacity=".25" x1="250" y1="70" x2="250" y2="224"/>
+<line class="ln" stroke-opacity=".25" x1="272" y1="70" x2="272" y2="224"/>
+<line class="ln" stroke-opacity=".25" x1="294" y1="70" x2="294" y2="224"/>
+<line class="ln" stroke-opacity=".25" x1="316" y1="70" x2="316" y2="224"/>
+<line class="ln" stroke-opacity=".25" x1="338" y1="70" x2="338" y2="224"/>
+<line class="ln" stroke-opacity=".25" x1="30" y1="70" x2="338" y2="70"/>
+<line class="ln" stroke-opacity=".25" x1="30" y1="92" x2="338" y2="92"/>
+<line class="ln" stroke-opacity=".25" x1="30" y1="114" x2="338" y2="114"/>
+<line class="ln" stroke-opacity=".25" x1="30" y1="136" x2="338" y2="136"/>
+<line class="ln" stroke-opacity=".25" x1="30" y1="158" x2="338" y2="158"/>
+<line class="ln" stroke-opacity=".25" x1="30" y1="180" x2="338" y2="180"/>
+<line class="ln" stroke-opacity=".25" x1="30" y1="202" x2="338" y2="202"/>
+<line class="ln" stroke-opacity=".25" x1="30" y1="224" x2="338" y2="224"/>
+<rect x="32" y="72" width="128" height="128" rx="3" fill="#009688" fill-opacity=".22" stroke="#009688" stroke-width="3"/>
+<text class="b" x="38" y="192" fill="#009688">tile 1</text>
+<rect x="120" y="72" width="128" height="128" rx="3" fill="#f57c00" fill-opacity=".22" stroke="#f57c00" stroke-width="3"/>
+<text class="b" x="126" y="192" fill="#f57c00">tile 2</text>
+<rect x="208" y="72" width="128" height="128" rx="3" fill="#9c27b0" fill-opacity=".22" stroke="#9c27b0" stroke-width="3"/>
+<text class="b" x="214" y="192" fill="#9c27b0">tile 3</text>
+<text class="fg sm" x="140" y="246" text-anchor="middle">overlap</text>
+<line class="ln" x1="140" y1="232" x2="140" y2="196" stroke-width="1.2" marker-end="url(#ats)"/>
+<line class="ln" x1="30" y1="36" x2="162" y2="36" stroke-width="1.5" marker-start="url(#ats)" marker-end="url(#ats)"/><text class="fg sm" x="96.0" y="30" text-anchor="middle">tile_size = 6</text>
+<line class="ln" x1="30" y1="60" x2="118" y2="60" stroke-width="1.5" marker-start="url(#ats)" marker-end="url(#ats)"/><text class="fg sm" x="74.0" y="54" text-anchor="middle">step_size = 4</text>
+<text class="fg b" x="368" y="80">Sliding window</text>
+<text class="mut sm" x="368" y="106">Each tile is tile_size wide.</text>
+<text class="mut sm" x="368" y="126">The next tile starts step_size</text>
+<text class="mut sm" x="368" y="146">pixels further.</text>
+<text class="mut sm" x="368" y="166">step < tile  →  tiles overlap</text>
+<text class="mut sm" x="368" y="186">step = tile  →  no overlap</text>
+<text class="mut sm" x="368" y="206">step > tile  →  gaps</text>
+</svg>

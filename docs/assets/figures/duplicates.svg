@@ -1,0 +1,23 @@
+<svg class="plk-svg" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 680 240" role="img" aria-label="clear_duplicates">
+<title>clear_duplicates</title>
+<style>
+.fg{fill:var(--md-default-fg-color,#222)}
+.mut{fill:var(--md-default-fg-color--light,#666)}
+.ln{stroke:var(--md-default-fg-color--light,#666);fill:none}
+.bg{fill:var(--md-default-fg-color--lightest,#eee)}
+text{font-family:var(--md-text-font-family,sans-serif);font-size:14px}
+.sm{font-size:12px}.b{font-weight:700}.mono{font-family:var(--md-code-font-family,monospace)}
+</style>
+<text class="fg b mono" x="20" y="24">clear_duplicates=False (default)</text>
+<rect x="20" y="40" width="180" height="150" rx="3" fill="#009688" fill-opacity=".2" stroke="#009688" stroke-width="3"/>
+<rect x="130" y="48" width="180" height="150" rx="3" fill="#f57c00" fill-opacity=".2" stroke="#f57c00" stroke-width="3"/>
+<rect x="145" y="100" width="40" height="30" fill="#fbc02d" fill-opacity=".6" stroke="#fbc02d" stroke-width="2"/>
+<text class="mut sm" x="20" y="225">the car is saved twice, in tile 1 and tile 2</text>
+<text class="b sm" x="28" y="185" fill="#009688">tile 1</text><text class="b sm" x="268" y="193" fill="#f57c00">tile 2</text>
+<text class="fg b mono" x="360" y="24">clear_duplicates=True</text>
+<rect x="360" y="40" width="180" height="150" rx="3" fill="#009688" fill-opacity=".2" stroke="#009688" stroke-width="3"/>
+<rect x="470" y="48" width="180" height="150" rx="3" fill="#f57c00" fill-opacity=".06" stroke="#f57c00" stroke-width="3" stroke-dasharray="6 5"/>
+<rect x="485" y="100" width="40" height="30" fill="#fbc02d" fill-opacity=".6" stroke="#fbc02d" stroke-width="2"/>
+<text class="mut sm" x="360" y="225">tile 2 adds no new object, so it is skipped</text>
+<text class="b sm" x="368" y="185" fill="#009688">tile 1</text><text class="b sm" x="608" y="193" fill="#f57c00">tile 2</text>
+</svg>

@@ -1,0 +1,159 @@
+/* ---------------------------------------------------------------- hero */
+.plk-hero {
+  text-align: center;
+  margin: 0.5rem 0 1.5rem;
+}
+.plk-hero img.plk-logo {
+  width: 96px;
+}
+.plk-hero h1 {
+  margin: 0.4rem 0 0.2rem;
+  font-weight: 700;
+}
+.plk-hero .plk-tagline {
+  font-size: 1.15rem;
+  color: var(--md-default-fg-color--light);
+  margin: 0 auto 1rem;
+  max-width: 34rem;
+}
+.plk-hero .md-button {
+  margin: 0.2rem;
+}
+
+/* ---------------------------------------------------------------- figures */
+.plk-svg {
+  width: 100%;
+  height: auto;
+  max-width: 720px;
+  display: block;
+  margin: 0 auto;
+}
+.md-typeset figure.plk-fig {
+  margin: 1.2rem auto;
+  width: 100%;
+  max-width: 720px;
+}
+figure.plk-fig figcaption {
+  font-size: 0.75rem;
+  color: var(--md-default-fg-color--light);
+  max-width: 40rem;
+}
+.plk-rounded {
+  border-radius: 0.4rem;
+  box-shadow: var(--md-shadow-z1);
+}
+
+/* Before -> after strip: input image, arrow, tiles. */
+.plk-flow {
+  display: grid;
+  grid-template-columns: 1.6fr auto 1fr;
+  gap: 0.8rem;
+  align-items: center;
+  margin: 1rem 0 1.5rem;
+}
+.plk-flow .plk-arrow {
+  font-size: 2rem;
+  color: var(--md-accent-fg-color);
+  text-align: center;
+}
+.plk-flow figure {
+  margin: 0;
+}
+.plk-flow figcaption {
+  font-size: 0.7rem;
+  color: var(--md-default-fg-color--light);
+  margin-top: 0.3rem;
+}
+.plk-mosaic {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 4px;
+}
+.plk-mosaic img {
+  width: 100%;
+  border-radius: 0.2rem;
+  display: block;
+}
+@media screen and (max-width: 44.9375em) {
+  .plk-flow {
+    grid-template-columns: 1fr;
+  }
+  .plk-flow .plk-arrow {
+    transform: rotate(90deg);
+  }
+}
+
+/* Side-by-side comparison. */
+.plk-compare {
+  max-width: 640px;
+  margin: 0 auto;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+}
+.plk-compare figure {
+  margin: 0;
+}
+.plk-compare img {
+  width: 100%;
+  border-radius: 0.3rem;
+  image-rendering: pixelated;
+}
+.plk-compare figcaption {
+  font-size: 0.75rem;
+}
+
+/* ---------------------------------------------------------------- playground */
+.plk-playground {
+  border: 1px solid var(--md-default-fg-color--lightest);
+  border-radius: 0.4rem;
+  padding: 0.8rem;
+  margin: 1rem 0 1.5rem;
+}
+.plk-playground canvas {
+  width: 100%;
+  height: auto;
+  border-radius: 0.3rem;
+  display: block;
+}
+.plk-controls {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(12rem, 1fr));
+  gap: 0.4rem 1.2rem;
+  margin-top: 0.8rem;
+  font-size: 0.75rem;
+}
+.plk-controls label {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+}
+.plk-controls label.plk-check {
+  flex-direction: row;
+  align-items: center;
+  gap: 0.4rem;
+}
+.plk-controls input[type="range"] {
+  width: 100%;
+  accent-color: var(--md-primary-fg-color);
+}
+.plk-stats {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem 1.2rem;
+  margin-top: 0.6rem;
+  font-size: 0.75rem;
+}
+.plk-stats b {
+  font-size: 0.95rem;
+}
+.plk-playground pre {
+  margin: 0.6rem 0 0;
+}
+
+/* md_in_html wraps images in <p>; let them take part in the grid directly. */
+.plk-mosaic > p,
+.plk-flow figure > p,
+.plk-compare figure > p {
+  display: contents;
+}

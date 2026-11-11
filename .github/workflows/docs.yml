@@ -4,7 +4,7 @@ on:
   push:
     branches: [main]
   pull_request:
-    paths: ["docs/**", "mkdocs.yml", "src/**", "README.md"]
+    paths: ["docs/**", "mkdocs.yml", "src/**", "README.md", "scripts/make_doc_figures.py"]
   workflow_dispatch:
 
 permissions:

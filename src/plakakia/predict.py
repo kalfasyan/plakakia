@@ -36,6 +36,7 @@ import cv2
 import numpy as np
 import numpy.typing as npt
 
+from .backend import nms, to_numpy
 from .tiling import SizeLike, _per_axis, normalize_axes, tile_grid, window_slices
 
 __all__ = [
@@ -53,17 +54,6 @@ Model = Callable[[Any], Sequence[TileResult]]
 
 
 # --------------------------------------------------------------------------- arrays
-
-
-def _to_numpy(x: Any) -> np.ndarray:
-    """Convert a NumPy array, list, PyTorch tensor (any device) or CuPy array to NumPy."""
-    if isinstance(x, np.ndarray):
-        return x
-    if hasattr(x, "detach"):  # torch.Tensor
-        return np.asarray(x.detach().cpu().numpy())
-    if type(x).__module__.startswith("cupy"):
-        return np.asarray(x.get())
-    return np.asarray(x)
 
 
 def _stack(arrays: list[Any]) -> Any:
@@ -384,6 +374,10 @@ def merge_detections(
     cut = np.zeros(len(b), dtype=bool) if seam is None else np.asarray(seam, dtype=bool)
     if not len(b) == len(s) == len(c) == len(cut):
         raise ValueError("boxes, scores, class_ids and seam must have the same length.")
+    if not cut.any():
+        # No box touches a seam, so the merge is plain NMS: use the shared (faster) one.
+        keep = nms(b, s, iou_threshold, class_ids=None if class_agnostic else c)
+        return Detections(b[keep], s[keep], c[keep])
     groups = (
         [np.arange(len(b))] if class_agnostic else [np.flatnonzero(c == k) for k in np.unique(c)]
     )
@@ -436,7 +430,7 @@ def _collect(
     for res in results:
         if len(res) != 3:
             raise ValueError("The model must return (boxes, scores, class_ids) for each tile.")
-        b, s, c = (_to_numpy(v) for v in res)
+        b, s, c = (to_numpy(v) for v in res)
         out.append(
             (
                 np.asarray(b, dtype=np.float64).reshape(-1, 4),

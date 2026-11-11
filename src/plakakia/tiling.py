@@ -4,6 +4,10 @@ Everything in this module is pure NumPy: no file I/O and no global state, so the
 functions can be used online (e.g. inside a data loader) as well as by the
 offline pipeline in :mod:`plakakia.pipeline`.
 
+:func:`tile_array`, :func:`tile_image` and :func:`iter_tiles` also accept PyTorch tensors
+and CuPy arrays, and then return tiles from the same library on the same device (a GPU
+tensor stays on the GPU). Tile coordinates are always NumPy. See :mod:`plakakia.backend`.
+
 Conventions
 -----------
 * Arrays can have any number of dimensions and any dtype: ``(H, W)`` grayscale,
@@ -18,10 +22,12 @@ Conventions
 from __future__ import annotations
 
 from collections.abc import Iterator, Sequence
+from typing import Any, overload
 
 import numpy as np
 import numpy.typing as npt
-from numpy.lib.stride_tricks import sliding_window_view
+
+from .backend import gather_tiles, is_device_array
 
 __all__ = [
     "assign_boxes_to_tiles",
@@ -153,7 +159,7 @@ def window_slices(
 
 
 def _resolve(
-    arr: np.ndarray,
+    arr: Any,
     tile_shape: SizeLike,
     step: SizeLike | None,
     axes: int | Sequence[int] | None,
@@ -167,14 +173,32 @@ def _resolve(
     return axes_t, sizes, steps
 
 
+@overload
 def tile_array(
-    array: npt.ArrayLike,
+    array: np.ndarray,
+    tile_shape: SizeLike,
+    step: SizeLike | None = ...,
+    *,
+    axes: int | Sequence[int] | None = ...,
+    cover_edges: bool = ...,
+) -> tuple[np.ndarray, npt.NDArray[np.intp]]: ...
+@overload
+def tile_array(
+    array: object,
+    tile_shape: SizeLike,
+    step: SizeLike | None = ...,
+    *,
+    axes: int | Sequence[int] | None = ...,
+    cover_edges: bool = ...,
+) -> tuple[Any, npt.NDArray[np.intp]]: ...
+def tile_array(
+    array: object,
     tile_shape: SizeLike,
     step: SizeLike | None = None,
     *,
     axes: int | Sequence[int] | None = None,
     cover_edges: bool = False,
-) -> tuple[np.ndarray, npt.NDArray[np.intp]]:
+) -> tuple[Any, npt.NDArray[np.intp]]:
     """Tile an N-D array along any axes.
 
     Axes that are not tiled are kept whole, in their original position, so that
@@ -183,6 +207,7 @@ def tile_array(
     Args:
         array: Any array, e.g. a ``(H, W, B)`` or ``(B, H, W)`` hyperspectral cube.
             Memory-mapped arrays (``np.load(..., mmap_mode="r")``) are read lazily.
+            PyTorch tensors and CuPy arrays are tiled on their own device.
         tile_shape: Tile size per tiled axis (or one size for all of them).
         step: Stride per tiled axis. Defaults to ``tile_shape`` (no overlap).
         axes: Axes to tile, in any order. Defaults to the first ``len(tile_shape)`` axes
@@ -190,8 +215,9 @@ def tile_array(
         cover_edges: Add border-aligned tiles so the whole extent of each axis is covered.
 
     Returns:
-        ``(tiles, starts)``: ``tiles`` is a contiguous ``(T, ...)`` copy and ``starts`` is a
-        ``(T, len(axes))`` array of tile start offsets, one column per entry of ``axes``.
+        ``(tiles, starts)``: ``tiles`` is a contiguous ``(T, ...)`` copy (a tensor on the
+        input's device for PyTorch/CuPy input) and ``starts`` is a ``(T, len(axes))``
+        NumPy array of tile start offsets, one column per entry of ``axes``.
 
     Example:
         Tile a channels-first cube spatially and spectrally:
@@ -203,38 +229,46 @@ def tile_array(
         >>> starts[:2].tolist()  # (y, x, band) per tile
         [[0, 0, 0], [0, 0, 50]]
     """
-    arr = np.asarray(array)
+    arr: Any = array if is_device_array(array) else np.asarray(array)
     axes_t, sizes, steps = _resolve(arr, tile_shape, step, axes)
     starts = tile_grid([arr.shape[a] for a in axes_t], sizes, steps, cover_edges=cover_edges)
-    out_shape = list(arr.shape)
-    for axis, size in zip(axes_t, sizes, strict=True):
-        out_shape[axis] = size
-    if len(starts) == 0:
-        return np.empty((0, *out_shape), dtype=arr.dtype), starts
-
-    # sliding_window_view gives a zero-copy view with the window offsets on the original
-    # axes and the window contents appended at the end. Reorder it (still a view) to
-    # (offsets of tiled axes..., tile in the array's own axis order), then gather once:
-    # only the selected windows are materialised, already in contiguous layout.
-    windows = sliding_window_view(arr, sizes, axis=axes_t)
-    ndim = arr.ndim
-    order = [*axes_t, *(ndim + axes_t.index(d) if d in axes_t else d for d in range(ndim))]
-    tiles = windows.transpose(order)[tuple(starts.T)]
-    return tiles, starts
+    # A zero-copy sliding-window view of the array (window offsets on the original axes,
+    # window contents appended), reordered to (offsets..., tile) and gathered once: only
+    # the selected windows are materialised, already contiguous and on the input's device.
+    return gather_tiles(arr, sizes, axes_t, starts), starts
 
 
+@overload
 def iter_tiles(
     array: np.ndarray,
+    tile_shape: SizeLike,
+    step: SizeLike | None = ...,
+    *,
+    axes: int | Sequence[int] | None = ...,
+    cover_edges: bool = ...,
+) -> Iterator[tuple[tuple[int, ...], np.ndarray]]: ...
+@overload
+def iter_tiles(
+    array: Any,
+    tile_shape: SizeLike,
+    step: SizeLike | None = ...,
+    *,
+    axes: int | Sequence[int] | None = ...,
+    cover_edges: bool = ...,
+) -> Iterator[tuple[tuple[int, ...], Any]]: ...
+def iter_tiles(
+    array: Any,
     tile_shape: SizeLike,
     step: SizeLike | None = None,
     *,
     axes: int | Sequence[int] | None = None,
     cover_edges: bool = False,
-) -> Iterator[tuple[tuple[int, ...], np.ndarray]]:
+) -> Iterator[tuple[tuple[int, ...], Any]]:
     """Lazily yield ``(start, view)`` pairs without copying any data.
 
     Same arguments as :func:`tile_array`. Prefer this for arrays that do not fit in
     memory (e.g. memory-mapped hyperspectral cubes): only the tile you touch is read.
+    PyTorch tensors and CuPy arrays yield views on their own device.
 
     >>> arr = np.arange(12).reshape(3, 4)
     >>> for start, view in iter_tiles(arr, (3, 2)):
@@ -267,19 +301,38 @@ def tile_coordinates(
     return np.stack((x1, y1, x1 + tw, y1 + th), axis=-1).astype(np.intp)
 
 
+@overload
 def tile_image(
-    image: npt.ArrayLike,
+    image: np.ndarray,
+    tile_size: SizeLike = ...,
+    step_size: SizeLike = ...,
+    *,
+    axes: Sequence[int] = ...,
+    cover_edges: bool = ...,
+) -> tuple[np.ndarray, npt.NDArray[np.intp]]: ...
+@overload
+def tile_image(
+    image: object,
+    tile_size: SizeLike = ...,
+    step_size: SizeLike = ...,
+    *,
+    axes: Sequence[int] = ...,
+    cover_edges: bool = ...,
+) -> tuple[Any, npt.NDArray[np.intp]]: ...
+def tile_image(
+    image: object,
     tile_size: SizeLike = 250,
     step_size: SizeLike = 50,
     *,
     axes: Sequence[int] = (0, 1),
     cover_edges: bool = False,
-) -> tuple[np.ndarray, npt.NDArray[np.intp]]:
+) -> tuple[Any, npt.NDArray[np.intp]]:
     """Split an image into (possibly overlapping) tiles along its two spatial axes.
 
     Args:
         image: Array with at least 2 dimensions: ``(H, W)``, ``(H, W, C)``, a
-            hyperspectral ``(H, W, B)`` cube, or channels-first data with ``axes=(1, 2)``.
+            hyperspectral ``(H, W, B)`` cube, or channels-first data with ``axes=(1, 2)``
+            (e.g. a ``(C, H, W)`` PyTorch tensor, which is tiled on its own device).
         tile_size: Tile side in pixels, or ``(height, width)`` for rectangular tiles.
         step_size: Stride in pixels, or ``(height, width)``. ``step_size < tile_size``
             produces overlapping tiles.
@@ -303,9 +356,11 @@ def tile_image(
         >>> tile_image(cube, 64, 64, axes=(1, 2))[0].shape
         (4, 200, 64, 64)
     """
-    arr = np.asarray(image)
+    arr: Any = image if is_device_array(image) else np.asarray(image)
     if arr.ndim < 2:
-        raise ValueError(f"Expected an image with at least 2 dimensions, got shape {arr.shape}.")
+        raise ValueError(
+            f"Expected an image with at least 2 dimensions, got shape {tuple(arr.shape)}."
+        )
     if len(axes) != 2:
         raise ValueError(f"tile_image needs exactly two (y, x) axes, got {tuple(axes)}.")
     th, tw = _per_axis(tile_size, 2, "tile_size")

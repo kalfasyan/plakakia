@@ -15,6 +15,17 @@ All notable changes to this project are documented here. The format follows
   `predict_tiled` to get detections in map coordinates.
 - `tile_batches` (batches of tiles with their coordinates, for any array type) and
   `merge_detections` (NMS plus seam fusion for boxes you already have).
+- **GPU tiling**: `tile_image`, `tile_array` and `iter_tiles` accept PyTorch tensors and
+  CuPy arrays and return tiles on the same device (CUDA, MPS or CPU). Tiles are gathered
+  from a zero-copy sliding-window view in one device operation; coordinates stay NumPy.
+- `plakakia.nms`: class-aware non-maximum suppression that runs on the GPU through
+  `torchvision.ops.batched_nms` for PyTorch tensors, with a NumPy fallback.
+- `plakakia.to_numpy` and `plakakia.backend` helpers (`array_namespace`, `is_device_array`).
+- `plakakia.onnx.OnnxModel`: run an ONNX model on batches of tiles on GPUs and NPUs.
+  `providers="auto"` picks the fastest ONNX Runtime execution provider available
+  (TensorRT, CUDA, ROCm, CoreML, DirectML, OpenVINO, QNN, Vitis AI, CANN, then CPU).
+  New `onnx` extra.
+- `benchmarks/bench_device.py` compares NumPy and PyTorch tiling and NMS on every device.
 
 ### Changed
 - Redesigned the Streamlit demo (`demo/app.py`) as the **plakakia playground**: built-in
@@ -25,6 +36,7 @@ All notable changes to this project are documented here. The format follows
 - The `demo` extra now pulls in `h5py` and `tifffile` and needs Streamlit 1.50+.
 
 ### Documentation
+- New **GPU & NPU acceleration** guide and a **Devices & ONNX** API page.
 - New **Small object detection** guide (train on tiles, predict on tiles, merge the
   detections with NMS, map them to geographic coordinates) and a small-objects focus on
   the landing page.

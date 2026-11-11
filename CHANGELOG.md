@@ -4,9 +4,16 @@ All notable changes to this project are documented here. The format follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and the project uses
 [Semantic Versioning](https://semver.org/).
 
-## [0.4.0] - Unreleased
+## [1.0.0] - 2026-11-11
 
-Hyperspectral, multispectral and geospatial (satellite / drone) data.
+The first release since 0.2.1, and the first with a stable, typed public API. It ships
+everything from the unpublished 0.3.0 modernisation below plus hyperspectral,
+multispectral and geospatial (satellite / drone) support.
+
+**Upgrading from 0.2.x:** YAML configs and output file names keep working, but the Python
+API is new (for example `Settings` became `TilingConfig` and the `plakakia.utils_tiling`
+imports moved to the top-level `plakakia` package). See the 0.3.0 notes below and the
+[docs](https://kalfasyan.github.io/plakakia/).
 
 ### Added
 - `tile_array`: tile N-D arrays along **any** axes, with a tile size and stride per axis
@@ -31,7 +38,7 @@ Hyperspectral, multispectral and geospatial (satellite / drone) data.
 - Segmentation masks keep their format (`png`, `npy`, `tif`...) instead of always PNG;
   JPEG masks are still written as PNG.
 
-## [0.3.0]
+## [0.3.0] - not published
 
 A ground-up modernisation of the code base. The YAML config keys and the output file
 naming are backwards compatible; the Python API is new.

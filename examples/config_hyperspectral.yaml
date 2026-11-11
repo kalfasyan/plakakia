@@ -1,0 +1,18 @@
+# Tile hyperspectral cubes stored as HDF5 (or .npy) along space and wavelength.
+# Requires `plakakia[hyperspectral]` for HDF5.
+input_dir_images: data/cubes
+input_extension_images: h5
+hdf5_dataset: reflectance     # dataset to read when a file holds several
+input_dir_annotations: data/labels
+input_format_annotations: yolo
+output_dir_images: output/cubes
+output_dir_annotations: output/labels
+output_extension_images: h5   # or npy
+
+axes: [0, 1, 2]               # (height, width, bands): tile all three
+tile_size: [128, 128, 32]     # 128x128 pixels, 32 bands
+step_size: [96, 96, 16]       # spectral windows overlap by 16 bands
+cover_edges: true
+save_empty_tiles: true
+
+num_workers: -1

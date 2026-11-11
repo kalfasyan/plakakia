@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from pathlib import Path
+
 import numpy as np
 import pytest
 
@@ -138,3 +140,96 @@ def test_select_unique_tiles() -> None:
     )
     assert select_unique_tiles(assignment).tolist() == [True, False, False, True, True]
     assert select_unique_tiles(np.zeros((3, 0), bool)).tolist() == [False] * 3
+
+
+# --------------------------------------------------------------------------- N-D tiling
+
+from plakakia import iter_tiles, normalize_axes, tile_array, tile_grid, window_slices  # noqa: E402
+
+
+@pytest.mark.parametrize(
+    ("shape", "tile", "step", "axes"),
+    [
+        ((40, 50, 7), (16, 16), (8, 12), (0, 1)),  # (H, W, B)
+        ((7, 40, 50), (16, 16), (16, 16), (1, 2)),  # (B, H, W)
+        ((7, 40, 50), (16, 16), (16, 16), (2, 1)),  # (B, H, W), x before y
+        ((40, 50, 30), (16, 16, 10), (16, 16, 5), (0, 1, 2)),  # spatial + spectral
+        ((30, 40, 50), (10, 16, 16), (10, 16, 16), (0, 1, 2)),  # bands first, all tiled
+        ((4, 40, 50, 3), (16, 16), (16, 16), (-3, -2)),  # (T, H, W, C), negative axes
+        ((100,), 32, 16, (0,)),  # 1-D signal
+    ],
+    ids=str,
+)
+@pytest.mark.parametrize("cover_edges", [False, True])
+def test_tile_array_matches_window_slices(
+    rng: np.random.Generator,
+    shape: tuple[int, ...],
+    tile: int | tuple[int, ...],
+    step: int | tuple[int, ...],
+    axes: tuple[int, ...],
+    cover_edges: bool,
+) -> None:
+    array = rng.random(shape, dtype=np.float32)
+    tiles, starts = tile_array(array, tile, step, axes=axes, cover_edges=cover_edges)
+    resolved = normalize_axes(axes, array.ndim)
+    sizes = (tile,) * len(axes) if isinstance(tile, int) else tile
+
+    expected_shape = list(shape)
+    for a, t in zip(resolved, sizes, strict=True):
+        expected_shape[a] = t
+    assert tiles.shape == (len(starts), *expected_shape)
+    assert starts.shape == (len(tiles), len(axes))
+    assert tiles.flags.c_contiguous
+    for t, start in zip(tiles, starts, strict=True):
+        np.testing.assert_array_equal(t, array[window_slices(start, sizes, resolved, array.ndim)])
+
+    lazy = list(iter_tiles(array, tile, step, axes=axes, cover_edges=cover_edges))
+    assert [s for s, _ in lazy] == [tuple(s) for s in starts.tolist()]
+    for (_, view), t in zip(lazy, tiles, strict=True):
+        assert np.shares_memory(view, array)
+        np.testing.assert_array_equal(view, t)
+
+
+def test_tile_array_defaults_and_memmap(tmp_path: Path) -> None:
+    path = tmp_path / "cube.npy"
+    np.save(path, np.arange(6 * 8 * 3).reshape(6, 8, 3))
+    cube = np.load(path, mmap_mode="r")
+    tiles, starts = tile_array(cube, 4)  # first two axes, step = tile size
+    assert tiles.shape == (2, 4, 4, 3)
+    assert starts.tolist() == [[0, 0], [0, 4]]
+    tiles, starts = tile_array(cube, (3, 4, 3))  # three axes inferred from tile_shape
+    assert tiles.shape == (4, 3, 4, 3)
+
+
+def test_tile_array_empty_and_errors() -> None:
+    tiles, starts = tile_array(np.zeros((5, 5, 10)), (8, 8))
+    assert tiles.shape == (0, 8, 8, 10)
+    assert starts.shape == (0, 2)
+    with pytest.raises(ValueError, match="has 3 values but 2 axes"):
+        tile_array(np.zeros((5, 5)), (2, 2, 2), axes=(0, 1))
+    with pytest.raises(ValueError, match="out of bounds"):
+        tile_array(np.zeros((5, 5)), 2, axes=(0, 2))
+    with pytest.raises(ValueError, match="unique"):
+        tile_array(np.zeros((5, 5)), 2, axes=(0, -2))
+    with pytest.raises(ValueError, match="At least one axis"):
+        normalize_axes((), 2)
+    with pytest.raises(ValueError, match="positive"):
+        tile_array(np.zeros((5, 5)), (2, 0))
+
+
+def test_tile_grid_zero_axes() -> None:
+    assert tile_grid((), ()).shape == (1, 0)
+
+
+def test_tile_image_rectangular_and_channels_first(rng: np.random.Generator) -> None:
+    image = rng.integers(0, 255, (60, 90, 3), dtype=np.uint8)
+    tiles, coords = tile_image(image, tile_size=(20, 30), step_size=(20, 30))
+    assert tiles.shape == (9, 20, 30, 3)
+    assert coords[1].tolist() == [30, 0, 60, 20]
+    cf_tiles, cf_coords = tile_image(image.transpose(2, 0, 1), (20, 30), (20, 30), axes=(1, 2))
+    np.testing.assert_array_equal(cf_coords, coords)
+    np.testing.assert_array_equal(cf_tiles, tiles.transpose(0, 3, 1, 2))
+    with pytest.raises(ValueError, match="exactly two"):
+        tile_image(image, 10, 10, axes=(0, 1, 2))
+    rect = tile_coordinates(60, 90, (20, 30), (10, 15))
+    assert rect[:2].tolist() == [[0, 0, 30, 20], [15, 0, 45, 20]]

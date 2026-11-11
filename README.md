@@ -126,7 +126,7 @@ See the [hyperspectral & geospatial guide](https://kalfasyan.github.io/plakakia/
 uv run --extra demo streamlit run demo/app.py
 ```
 
-<img src="docs/assets/demo.png" alt="Streamlit demo" width="40%"/>
+<img src="docs/assets/demo.png" alt="plakakia playground: the Streamlit demo app" width="80%"/>
 
 ## Features
 

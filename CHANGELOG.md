@@ -6,6 +6,14 @@ All notable changes to this project are documented here. The format follows
 
 ## [Unreleased]
 
+### Changed
+- Redesigned the Streamlit demo (`demo/app.py`) as the **plakakia playground**: built-in
+  sample drone photo (with labelled boxes) and hyperspectral cube, overlap in percent,
+  a tile inspector, box visibility, band splitting, mean spectra, a tile gallery, a ZIP
+  download (tiles, YOLO labels, positions) and copy-paste Python / CLI code for the
+  current settings. Uploads accept images, `.npy`, HDF5 and multi-band TIFF.
+- The `demo` extra now pulls in `h5py` and `tifffile` and needs Streamlit 1.50+.
+
 ### Documentation
 - New visual, beginner-friendly docs: a landing page with a before/after example and a
   "why tile?" comparison, a rewritten **How tiling works** guide with a diagram for every

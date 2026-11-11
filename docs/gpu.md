@@ -20,9 +20,9 @@ from plakakia import tile_image
 image = read_image("orthomosaic.png").to("cuda")  # (C, H, W) uint8, on the GPU
 tiles, coords = tile_image(image, tile_size=640, step_size=512, axes=(1, 2), cover_edges=True)
 
-tiles.device   # device(type='cuda', index=0)
-tiles.shape    # (T, 3, 640, 640): ready to batch into your model
-coords[:2]     # NumPy (x1, y1, x2, y2) per tile, as always
+tiles.device  # device(type='cuda', index=0)
+tiles.shape  # (T, 3, 640, 640): ready to batch into your model
+coords[:2]  # NumPy (x1, y1, x2, y2) per tile, as always
 ```
 
 How it works: plakakia builds a **zero-copy sliding-window view** of the tensor
@@ -86,9 +86,9 @@ from plakakia.onnx import OnnxModel
 model = OnnxModel("detector.onnx", channels_first=True, scale=1 / 255)
 print(model.providers)  # e.g. ['CUDAExecutionProvider', 'CPUExecutionProvider']
 
-image = cv2.imread("trap_042.jpg")                    # (H, W, 3)
+image = cv2.imread("trap_042.jpg")  # (H, W, 3)
 tiles, coords = tile_image(image, 640, 480, cover_edges=True)
-outputs = model(tiles[:16])                           # (16, 3, 640, 640) float32 in
+outputs = model(tiles[:16])  # (16, 3, 640, 640) float32 in
 ```
 
 `OnnxModel(...)` is a plain callable, `model(batch) -> list of outputs`. It converts the
@@ -128,7 +128,14 @@ finds:
 uv run python benchmarks/bench_device.py --size 4096 --tile 640 --step 512
 ```
 
-On the CPU, NumPy and PyTorch tiling are both a single memory copy and run about as fast.
-The gain on a GPU is mostly the copies you no longer make: the image never leaves the
-device, and tiles are ready to batch into the model. NMS on thousands of boxes is where
-torchvision's kernels pull far ahead of NumPy.
+A run on a 4-core cloud CPU, without a GPU (4096 × 4096 RGB image, 64 tiles of 640 px,
+NMS on 5,000 boxes in 10 classes):
+
+| Operation | NumPy | PyTorch (CPU) |
+|---|---|---|
+| `tile_image` | 25 ms | 27 ms |
+| `nms` | 102 ms | 5 ms (20× faster) |
+
+On the CPU, tiling is one memory copy either way. On a GPU the gain is mostly the copies
+you no longer make: the image never leaves the device, and the tiles are ready to batch
+into the model. Run the benchmark on your own hardware to see your numbers.

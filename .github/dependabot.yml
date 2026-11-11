@@ -9,6 +9,9 @@ updates:
         patterns: ["*"]
   - package-ecosystem: uv
     directory: /
+    # Only refresh uv.lock; keep the lower bounds in pyproject.toml as they are,
+    # so the "lowest dependency versions" CI job keeps testing them.
+    versioning-strategy: lockfile-only
     schedule:
       interval: monthly
     groups:
